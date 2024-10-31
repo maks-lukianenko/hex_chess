@@ -3,6 +3,8 @@ package com.example.hexchess.navigation
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.example.hexchess.authorization.LoginScreen
+import com.example.hexchess.authorization.RegistrationScreen
 import com.example.hexchess.mainmenu.MainMenuScreen
 import com.example.hexchess.onlinegame.OnlineGameScreen
 
@@ -16,19 +18,24 @@ import com.example.hexchess.onlinegame.OnlineGameScreen
  */
 
 sealed class Screen(val route: String) {
-    object MainMenu : Screen("MainMenuScreen")
-    object OnlineGame : Screen("OnlineGameScreen")
+    data object LoginMenu : Screen("LoginScreen")
+    data object RegisterMenu : Screen("RegistrationScreen")
+    data object MainMenu : Screen("MainMenuScreen")
+    data object OnlineGame : Screen("OnlineGameScreen")
 }
 
 val screens = listOf(
+    Screen.LoginMenu,
+    Screen.RegisterMenu,
     Screen.OnlineGame,
     Screen.MainMenu,
-
 )
 
 @Composable
 fun HandleScreen(screen: Screen, navController: NavHostController) {
     when (screen) {
+        is Screen.LoginMenu -> LoginScreen(navController = navController)
+        is Screen.RegisterMenu -> RegistrationScreen(navController = navController)
         is Screen.MainMenu -> MainMenuScreen(navController = navController)
         is Screen.OnlineGame -> OnlineGameScreen(navController = navController)
     }
@@ -39,4 +46,12 @@ fun NavController.navigateToMainMenu() {
 }
 fun NavController.navigateToOnlineGame() {
     navigate("OnlineGameScreen")
+}
+
+fun NavController.navigateToLoginMenu() {
+    navigate("LoginScreen")
+}
+
+fun NavController.navigateToRegistrationMenu() {
+    navigate("RegistrationScreen")
 }

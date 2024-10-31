@@ -99,7 +99,6 @@ fun PieceView(sizeOfItem: Dp, color: Color, piece: Piece?, x: Int, y: Int, setPo
     val clip = remember(hexagon) {
         RoundedPolygonShape(polygon = hexagon)
     }
-    var flag by remember { mutableStateOf(true) }
 
     val imageResId = when (piece?.type) {
         PieceType.Pawn -> if (piece.color == PieceColor.White) R.drawable.pawn_white else R.drawable.pawn_dark
@@ -157,7 +156,7 @@ fun PieceView(sizeOfItem: Dp, color: Color, piece: Piece?, x: Int, y: Int, setPo
 
 @Composable
 fun BoardColumn (columnIndex: Int, startColor: Int, top: Dp, start: Dp, size: Int, columnCells: MutableList<Piece?>, setPosition: (Position?) -> Unit, chosenPosition: Position?) {
-    val colors: ArrayList<Color> = arrayListOf(Color.DarkGray, Color.White, Color.LightGray)
+
     val columnSize = columnCells.size
 
 
@@ -167,10 +166,21 @@ fun BoardColumn (columnIndex: Int, startColor: Int, top: Dp, start: Dp, size: In
             .fillMaxHeight(),
         verticalArrangement = Arrangement.spacedBy((-7).dp)
     ) {
-        columnCells.forEachIndexed { i, piece ->
-            // column indexes are from A to L( for us it's x )
-            // y for us means row
-            PieceView(size.dp, colors[(i + startColor) % 3], columnCells[columnSize - 1 - i], columnIndex, columnSize - i - 1, setPosition, chosenPosition)
+        if (viewModel.color == "white") {
+            val colors: ArrayList<Color> = arrayListOf(Color.DarkGray, Color.White, Color.LightGray)
+            columnCells.forEachIndexed { i, _ ->
+                // column indexes are from A to L( for us it's x )
+                // y for us means row
+                PieceView(size.dp, colors[(i + startColor) % 3], columnCells[columnSize - 1 - i], columnIndex, columnSize - i - 1, setPosition, chosenPosition)
+            }
+
+        } else {
+            val colors: ArrayList<Color> = arrayListOf(Color.White, Color.DarkGray, Color.LightGray)
+            columnCells.forEachIndexed { i, _ ->
+                // column indexes are from A to L( for us it's x )
+                // y for us means row
+                PieceView(size.dp, colors[(i + startColor) % 3], columnCells[i], columnIndex, i, setPosition, chosenPosition)
+            }
         }
     }
 }

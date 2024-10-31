@@ -1,7 +1,7 @@
 package com.example.hexchess.ui.theme
 
-import android.app.Activity
 import android.os.Build
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -16,6 +16,9 @@ private val DarkColorScheme = darkColorScheme(
     secondary = PurpleGrey80,
     tertiary = Pink80
 )
+
+val LightTurquoise = Color(0xFFE0F4F5)
+val DeepBlueGreen = Color(0xFF015366)
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
