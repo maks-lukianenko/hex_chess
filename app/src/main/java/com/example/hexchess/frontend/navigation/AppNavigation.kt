@@ -1,12 +1,13 @@
-package com.example.hexchess.navigation
+package com.example.hexchess.frontend.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import com.example.hexchess.authorization.LoginScreen
-import com.example.hexchess.authorization.RegistrationScreen
-import com.example.hexchess.mainmenu.MainMenuScreen
-import com.example.hexchess.onlinegame.OnlineGameScreen
+import com.example.hexchess.frontend.authorization.EnterScreen
+import com.example.hexchess.frontend.authorization.LoginScreen
+import com.example.hexchess.frontend.authorization.RegistrationScreen
+import com.example.hexchess.frontend.mainmenu.MainMenuScreen
+import com.example.hexchess.frontend.onlinegame.OnlineGameScreen
 
 /*
  !!! IMPORTANT !!!
@@ -18,6 +19,7 @@ import com.example.hexchess.onlinegame.OnlineGameScreen
  */
 
 sealed class Screen(val route: String) {
+    data object EnterMenu : Screen("EnterScreen")
     data object LoginMenu : Screen("LoginScreen")
     data object RegisterMenu : Screen("RegistrationScreen")
     data object MainMenu : Screen("MainMenuScreen")
@@ -25,15 +27,17 @@ sealed class Screen(val route: String) {
 }
 
 val screens = listOf(
+    Screen.OnlineGame,
+    Screen.EnterMenu,
     Screen.LoginMenu,
     Screen.RegisterMenu,
-    Screen.OnlineGame,
     Screen.MainMenu,
 )
 
 @Composable
 fun HandleScreen(screen: Screen, navController: NavHostController) {
     when (screen) {
+        is Screen.EnterMenu -> EnterScreen(navController = navController)
         is Screen.LoginMenu -> LoginScreen(navController = navController)
         is Screen.RegisterMenu -> RegistrationScreen(navController = navController)
         is Screen.MainMenu -> MainMenuScreen(navController = navController)
@@ -44,6 +48,7 @@ fun HandleScreen(screen: Screen, navController: NavHostController) {
 fun NavController.navigateToMainMenu() {
     navigate("MainMenuScreen")
 }
+
 fun NavController.navigateToOnlineGame() {
     navigate("OnlineGameScreen")
 }
@@ -54,4 +59,8 @@ fun NavController.navigateToLoginMenu() {
 
 fun NavController.navigateToRegistrationMenu() {
     navigate("RegistrationScreen")
+}
+
+fun NavController.navigateToEnterMenu() {
+    navigate("EnterScreen")
 }

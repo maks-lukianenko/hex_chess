@@ -1,10 +1,14 @@
-package com.example.hexchess.navigation
+package com.example.hexchess.frontend.navigation
 
+import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+
+val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
 @Composable
 fun AppNavHost() {

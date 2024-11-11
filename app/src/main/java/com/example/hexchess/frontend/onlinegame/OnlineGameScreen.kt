@@ -1,6 +1,7 @@
-package com.example.hexchess.onlinegame
+package com.example.hexchess.frontend.onlinegame
 
 import android.util.Log
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,14 +12,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -35,8 +42,8 @@ import com.example.hexchess.backend.onlinegame.PieceColor
 import com.example.hexchess.backend.onlinegame.PieceType
 import com.example.hexchess.backend.onlinegame.Position
 
-private const val TAG = "Online game screen"
 val viewModel: OnlineGameViewModel = OnlineGameViewModel()
+private const val TAG = "Online game screen"
 
 @Composable
 fun OnlineGameScreen(navController: NavHostController = rememberNavController()) {
@@ -116,18 +123,19 @@ fun PieceView(sizeOfItem: Dp, color: Color, piece: Piece?, x: Int, y: Int, setPo
         modifier = Modifier
             .border(1.dp, Color.Black, RoundedPolygonShape(polygon = hexagon))
             .background(color, RoundedPolygonShape(polygon = hexagon))
+            .clip(RoundedPolygonShape(polygon = hexagon))
             .size(sizeOfItem)
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) {
                 Log.d(TAG, "BOX x:%d y:%d".format(position.x, position.y))
-                if (chosenPosition != null) {
+                if (chosenPosition != null && position in viewModel.availableMoves) {
+                    viewModel.makeMove(chosenPosition, position)
                     Log.d(TAG, "Chosen position x:%d y:%d".format(chosenPosition.x, chosenPosition.y))
                 } else {
                     Log.d(TAG, "Chosen position is NULL")
                 }
-                viewModel.makeMove(chosenPosition, position)
                 setPosition(null)
             }
     ) {
@@ -146,9 +154,22 @@ fun PieceView(sizeOfItem: Dp, color: Color, piece: Piece?, x: Int, y: Int, setPo
                     .clickable {
                         Log.d(TAG, "IMAGE x:%d y:%d".format(position.x, position.y))
                         setPosition(position)
+                        viewModel.getAvailableMoves(position)
                     }
-                    .padding(1.dp)
             )
+        } else if (position in viewModel.availableMoves) {
+            Canvas(
+                modifier = Modifier
+                    .size(sizeOfItem)
+                    .align(Alignment.Center)
+                    .alpha(0.7f)
+            ) {
+                drawCircle(
+                    color = Color.Gray,
+                    radius = 10.dp.toPx() / 2f,
+                    center = Offset(sizeOfItem.toPx() / 2, sizeOfItem.toPx() / 2)
+                )
+            }
         }
     }
 

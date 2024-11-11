@@ -1,37 +1,49 @@
-package com.example.hexchess.authorization
+package com.example.hexchess.frontend.authorization
 
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.hexchess.frontend.navigation.navigateToMainMenu
+import com.example.hexchess.frontend.navigation.navigateToRegistrationMenu
 import com.example.hexchess.ui.theme.DeepBlueGreen
-import com.example.hexchess.ui.theme.LightTurquoise
 
 private val viewModel = AuthorizationViewModel()
+
+private const val TAG = "Login Screen"
 
 @Composable
 fun LoginScreen(navController: NavHostController = rememberNavController()) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(LightTurquoise),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -52,7 +64,7 @@ fun LoginScreen(navController: NavHostController = rememberNavController()) {
             BasicTextField(
                 value = username,
                 onValueChange = { username = it },
-                textStyle = TextStyle(fontSize = 18.sp, color = DeepBlueGreen),
+                textStyle = TextStyle(fontSize = 18.sp),
                 decorationBox = { innerTextField ->
                     Box(
                         Modifier
@@ -71,24 +83,34 @@ fun LoginScreen(navController: NavHostController = rememberNavController()) {
             Spacer(modifier = Modifier.height(8.dp))
 
             BasicTextField(
-                modifier = Modifier.background(Color.White),
+                modifier = Modifier.background(Color.White, shape = MaterialTheme.shapes.small),
                 value = password,
                 onValueChange = { password = it },
-                textStyle = TextStyle(fontSize = 18.sp, color = DeepBlueGreen),
+                textStyle = TextStyle(fontSize = 18.sp),
                 decorationBox = { innerTextField ->
-                    Box(
-                        Modifier
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .fillMaxWidth()
-                    ) {
-                        if (username.isEmpty()) {
-                            Text("Password", color = DeepBlueGreen.copy(alpha = 0.5f))
+                    val image = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                        Box(
+                            Modifier
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                .weight(1f)
+                        ) {
+                            if (password.isEmpty()) {
+                                Text("Password", color = DeepBlueGreen.copy(alpha = 0.5f))
+                            }
+                            innerTextField()
                         }
-                        innerTextField()
+                        IconButton(onClick = {
+                            passwordVisible = !passwordVisible
+                        }) {
+                            Icon(
+                                imageVector = image,
+                                contentDescription = null,
+                                tint = DeepBlueGreen)
+                        }
                     }
                 },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.None,
                     autoCorrectEnabled = false,
@@ -99,17 +121,23 @@ fun LoginScreen(navController: NavHostController = rememberNavController()) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { viewModel.onLoginClicked(username, password) },
-                colors = ButtonColors(
-                    containerColor = DeepBlueGreen,
-                    contentColor = Color.White,
-                    disabledContentColor = Color.White,
-                    disabledContainerColor = DeepBlueGreen
-                ),
+                onClick = {
+                    viewModel.onLoginClicked(username, password, context)
+                    navController.navigateToMainMenu()
+                    Log.d(TAG,"Pressed Login")
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Login", color = Color.White, fontSize = 18.sp)
+                Text("Login", fontSize = 18.sp)
             }
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Text(
+                modifier = Modifier.clickable { navController.navigateToRegistrationMenu() },
+                text = "Sign up",
+                fontSize = 16.sp,
+            )
         }
     }
 }
