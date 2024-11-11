@@ -121,7 +121,9 @@ class Board {
             var nx = x + dx
             var ny = y + dy
             while (isValidMove(Position(nx, ny, false), color)) {
+                val noy = if (nx > 5) ny - nx + 5 else ny
                 availableMoves.add(Position(nx, ny, false))
+                if (cells[nx][noy] != null) break
                 nx += dx
                 ny += dy
             }
@@ -139,7 +141,9 @@ class Board {
             var nx = x + dx
             var ny = y + dy
             while (isValidMove(Position(nx, ny, false), color)) {
+                val noy = if (nx > 5) ny - nx + 5 else ny
                 availableMoves.add(Position(nx, ny, false))
+                if (cells[nx][noy] != null) break
                 nx += dx
                 ny += dy
             }
@@ -155,7 +159,7 @@ class Board {
         if (color == PieceColor.Black) {
             if (y > 0 && cells[x][y - 1] == null) {
                 availableMoves.add(Position(x, y - 1))
-                if (y  > 1 && cells[x][y - 2] == null) availableMoves.add(Position(x, y - 2))
+                if (y  > 1 && cells[x][y - 2] == null && cells[x][y]!!.isFirstTurn) availableMoves.add(Position(x, y - 2))
             }
 
         } else {

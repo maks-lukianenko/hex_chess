@@ -8,7 +8,6 @@ import okhttp3.Request
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
-import org.json.JSONArray
 import org.json.JSONObject
 
 private const val TAG = "Game Client"
@@ -16,9 +15,10 @@ private const val TAG = "Game Client"
 class GameManager(private val username: String) {
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
-//    private val board = Board()
+    private val board = Board()
 
     fun connectToGame(gameCode: String) {
+//        val context = ApplicationProvider.getApplicationContext<Context>()
         val request = Request.Builder().url("ws://192.168.56.1:8000/ws/games/$gameCode/").build()
         webSocket = client.newWebSocket(request, ChessWebSocketListener())
     }
@@ -33,9 +33,9 @@ class GameManager(private val username: String) {
         webSocket?.send(moveJson.toString())
     }
 
-//    fun getBoardState() : MutableList<MutableList<Piece?>> {
-//        return board.cells
-//    }
+    fun getBoardState() : MutableList<MutableList<Piece?>> {
+        return board.cells
+    }
 
 
     // WebSocket Listener to handle messages from the server
@@ -55,7 +55,7 @@ class GameManager(private val username: String) {
                     val from = data.getString("from")
                     val to = data.getString("to")
                     Log.d(TAG, "Moved piece from $from to $to")
-//                    updateBoard(from, to)
+                    updateBoard(from, to)
                 }
             }
             Log.d(TAG, "ON MESSAGE")
@@ -76,14 +76,15 @@ class GameManager(private val username: String) {
     }
 
 
-//    private fun updateBoard(from: String, to: String) {
-//        val (fx, fy) = chessNotationToCoords(from)
-//        val (tx, ty) = chessNotationToCoords(to)
-//
-//        // Move piece on the board
-//        board.cells[tx][ty] = board.cells[fx][fy]
-//        board.cells[fx][fy] = null
-//    }
+    private fun updateBoard(from: String, to: String) {
+        val (fx, fy) = chessNotationToCoords(from)
+        val (tx, ty) = chessNotationToCoords(to)
+
+        // Move piece on the board
+        board.cells[fx][fy]!!.isFirstTurn = false
+        board.cells[tx][ty] = board.cells[fx][fy]
+        board.cells[fx][fy] = null
+    }
 
     private fun chessNotationToCoords(pos: String): Pair<Int, Int> {
         val column = pos[0]
@@ -100,7 +101,7 @@ class GameManager(private val username: String) {
         return column + row
     }
 
-//    fun getAvailableMoves(position: Position): Collection<Position?> {
-//        return board.getAvailableMoves(position)
-//    }
+    fun getAvailableMoves(position: Position): Collection<Position?> {
+        return board.getAvailableMoves(position)
+    }
 }

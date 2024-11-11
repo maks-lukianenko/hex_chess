@@ -15,8 +15,7 @@ private const val TAG = "Online Game View Model"
 class OnlineGameViewModel() : ViewModel() {
     var availableMoves = mutableStateListOf<Position?>(null)
     var cells = mutableStateListOf(mutableStateListOf<Piece?>(null))
-    private val board = Board()
-    val color = "black"
+    val color = "white"
     private val gameManager = GameManager("test")
 
     init {
@@ -25,11 +24,9 @@ class OnlineGameViewModel() : ViewModel() {
 
 
     fun boardUpdate() {
-//        board.initializeHexBoard()
-//        board.setupHexBoard()
-//        val boardState = gameManager.getBoardState()
+        val boardState = gameManager.getBoardState()
         cells.clear()
-        board.cells.forEachIndexed { columnIndex, columnCells ->
+        boardState.forEachIndexed { columnIndex, columnCells ->
             cells.add(mutableStateListOf())
             cells[columnIndex].addAll(columnCells)
         }
@@ -39,11 +36,6 @@ class OnlineGameViewModel() : ViewModel() {
         if (from != null) {
             val (fx, fy) = from.getWithoutOffset()
             val (tx, ty) = target.getWithoutOffset()
-            board.cells[tx][ty] = board.cells[fx][fy]
-            board.cells[fx][fy] = null
-            if (board.cells[tx][ty] != null && board.cells[fx][fy] == null) {
-                Log.d(TAG, "Writed correctly")
-            }
             gameManager.sendMove(fx, fy, tx, ty)
             boardUpdate()
             availableMoves.clear()
@@ -52,6 +44,6 @@ class OnlineGameViewModel() : ViewModel() {
 
     fun getAvailableMoves(position: Position) {
         availableMoves.clear()
-        availableMoves.addAll(board.getAvailableMoves(position))
+        availableMoves.addAll(gameManager.getAvailableMoves(position))
     }
 }
