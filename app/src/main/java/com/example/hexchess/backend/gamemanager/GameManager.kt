@@ -10,15 +10,18 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 import org.json.JSONObject
 
-private const val TAG = "Game Client"
+private const val TAG = "Game Manager"
 
 class GameManager {
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
-    private val board = Board()
+    val board = Board()
 
     fun connectToGame(gameCode: String) {
-        val request = Request.Builder().url("ws://192.168.56.1:8000/ws/games/$gameCode/").build()
+        val token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMxNDY5NTc1LCJpYXQiOjE3MzE0MjYzNzUsImp0aSI6IjQzMzAwYzQ3MTJkZTQyOTk5M2M3ODU4NTlkMTBiYzkxIiwidXNlcl9pZCI6M30.JF1yx9dNC8jLZ66Nje6ZPN9fpMWQuFbig6d0OsF5pzs"
+        val request = Request.Builder().url("ws://192.168.56.1:8000/ws/games/match/")
+            .addHeader("Authorization", "Bearer $token")
+            .build()
         webSocket = client.newWebSocket(request, ChessWebSocketListener())
     }
 
@@ -40,10 +43,6 @@ class GameManager {
         webSocket?.send(moveJson.toString())
     }
 
-    fun getBoardState() : MutableList<MutableList<Piece?>> {
-        return board.cells
-    }
-
 
     // WebSocket Listener to handle messages from the server
     private inner class ChessWebSocketListener : WebSocketListener() {
@@ -54,15 +53,21 @@ class GameManager {
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             val data = JSONObject(text)
-            when {
-                data.getString("type") == "error" -> {
+            when (data.getString("type")) {
+                "error" -> {
                     Log.d(TAG, "Error: ${data.getString("message")}")
                 }
-                data.getString("type") == "move_made" -> {
+                "move_made" -> {
                     val from = data.getString("from")
                     val to = data.getString("to")
                     Log.d(TAG, "Moved piece from $from to $to")
                     updateBoard(from, to)
+                }
+                "game_waiting" -> {
+                    val gameCode = data.getString("game_code")
+                    val playerColor = data.getString("player_color")
+                    Log.d(TAG, "Game with code $gameCode was created")
+                    Log.d(TAG, "Your color is $playerColor")
                 }
             }
             Log.d(TAG, "ON MESSAGE")

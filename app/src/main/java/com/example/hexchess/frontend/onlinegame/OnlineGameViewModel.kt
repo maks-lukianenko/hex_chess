@@ -13,7 +13,7 @@ private const val TAG = "Online Game View Model"
 class OnlineGameViewModel() : ViewModel() {
     var availableMoves = mutableStateListOf<Position?>(null)
     var cells = mutableStateListOf(mutableStateListOf<Piece?>(null))
-    val color = "white"
+    val color = "black"
 
 
 

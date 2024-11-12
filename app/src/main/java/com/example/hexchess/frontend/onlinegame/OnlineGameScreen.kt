@@ -63,6 +63,7 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
         gameManager.connectToGame("a116c6")
     }
 
+    viewModel.boardUpdate(gameManager.board.cells)
     var chosenPosition by remember {
         mutableStateOf<Position?>(null)
     }
@@ -71,7 +72,11 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
         chosenPosition = position
     }
 
-    viewModel.boardUpdate(gameManager.getBoardState())
+
+    LaunchedEffect(key1 = gameManager.board.cells) {
+        viewModel.boardUpdate(gameManager.board.cells)
+    }
+
     Box(modifier = Modifier
         .fillMaxSize()
         .background(Color(0xfff0e2b9)),
@@ -100,23 +105,24 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
         }
         BoardColumn(columnIndex = 5, startColor = 0, top = startTop, start = centerX, size = size, columnCells = cells[5], setPosition, chosenPosition, gameManager)
         for (i in 1..5) {
+            val columnOffset = if (viewModel.color=="black") -i else i
             BoardColumn(
-                columnIndex = 5 + i,
+                columnIndex = 5 + columnOffset,
                 startColor = (6 - i),
                 top = startTop + (i * verticalPadding).dp,
                 start = centerX + (i * horizontalPadding).dp,
-                size = size, columnCells = cells[5 + i],
+                size = size, columnCells = cells[5 + columnOffset],
                 setPosition,
                 chosenPosition,
                 gameManager
             )
             BoardColumn(
-                columnIndex = 5 - i,
+                columnIndex = 5 + columnOffset,
                 startColor = (6 - i),
                 top = startTop + (i * verticalPadding).dp,
                 start = centerX - (i * horizontalPadding).dp,
                 size = size,
-                columnCells = cells[5 - i],
+                columnCells = cells[5 + columnOffset],
                 setPosition,
                 chosenPosition,
                 gameManager
@@ -174,7 +180,6 @@ fun PieceView(
                 if (chosenPosition != null && position in viewModel.availableMoves) {
                     val (fx, fy) = chosenPosition.getWithoutOffset()
                     gameManager.sendMove(fx, fy, x, y, "test") // TODO put username as parameter
-                    viewModel.boardUpdate(gameManager.getBoardState())
                     viewModel.availableMoves.clear()
                     Log.d(
                         TAG,
@@ -199,7 +204,7 @@ fun PieceView(
                     }
                     .size(sizeOfItem)
                     .clickable {
-                        Log.d(TAG, "IMAGE x:%d y:%d".format(position.x, position.y))
+                        Log.d(TAG, "IMAGE x:%d y:%d".format(x, y))
                         setPosition(position)
                         viewModel.updateAvailableMoves(gameManager.getAvailableMoves(position))
                     }
