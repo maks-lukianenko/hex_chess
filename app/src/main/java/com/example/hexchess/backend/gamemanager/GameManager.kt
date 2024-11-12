@@ -12,18 +12,25 @@ import org.json.JSONObject
 
 private const val TAG = "Game Client"
 
-class GameManager(private val username: String) {
+class GameManager {
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private val board = Board()
 
     fun connectToGame(gameCode: String) {
-//        val context = ApplicationProvider.getApplicationContext<Context>()
         val request = Request.Builder().url("ws://192.168.56.1:8000/ws/games/$gameCode/").build()
         webSocket = client.newWebSocket(request, ChessWebSocketListener())
     }
 
-    fun sendMove(fx: Int, fy: Int, tx: Int, ty: Int) {
+    fun disconnect() {
+        webSocket?.let {
+            it.close(1000, "User disconnected")
+            Log.d(TAG, "Disconnected from WebSocket.")
+        }
+        webSocket = null
+    }
+
+    fun sendMove(fx: Int, fy: Int, tx: Int, ty: Int, username: String) {
         val moveJson = JSONObject().apply {
             put("username", username)
             put("type", "make_move")

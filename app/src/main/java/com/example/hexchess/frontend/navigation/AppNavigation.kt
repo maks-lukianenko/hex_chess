@@ -3,6 +3,7 @@ package com.example.hexchess.frontend.navigation
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import com.example.hexchess.backend.gamemanager.GameManager
 import com.example.hexchess.frontend.authorization.EnterScreen
 import com.example.hexchess.frontend.authorization.LoginScreen
 import com.example.hexchess.frontend.authorization.RegistrationScreen
@@ -28,20 +29,20 @@ sealed class Screen(val route: String) {
 
 val screens = listOf(
     Screen.OnlineGame,
+    Screen.MainMenu,
     Screen.EnterMenu,
     Screen.LoginMenu,
     Screen.RegisterMenu,
-    Screen.MainMenu,
 )
 
 @Composable
-fun HandleScreen(screen: Screen, navController: NavHostController) {
+fun HandleScreen(screen: Screen, navController: NavHostController, gameManager: GameManager) {
     when (screen) {
         is Screen.EnterMenu -> EnterScreen(navController = navController)
         is Screen.LoginMenu -> LoginScreen(navController = navController)
         is Screen.RegisterMenu -> RegistrationScreen(navController = navController)
-        is Screen.MainMenu -> MainMenuScreen(navController = navController)
-        is Screen.OnlineGame -> OnlineGameScreen(navController = navController)
+        is Screen.MainMenu -> MainMenuScreen(navController = navController, gameManager = gameManager)
+        is Screen.OnlineGame -> OnlineGameScreen(navController = navController, gameManager = gameManager)
     }
 }
 

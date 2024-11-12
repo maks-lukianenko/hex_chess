@@ -15,3 +15,5 @@ val DarkBlueGreen = Color(0xFF015366)
 val GrayishTeal = Color(0xFF63898C)
 val LightTeal = Color(0xFFA7D1D2)
 val LightBlueTeal = Color(0xFFE0F4F5)
+
+val LightCoral = Color(0xffe8aa87)

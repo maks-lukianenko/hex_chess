@@ -10,7 +10,7 @@ class Board {
         setupHexBoard()
     }
 
-    private fun initializeHexBoard() { // Init classic hex bord with 91 cells
+    private fun initializeHexBoard() { // Init classic hex bord with 71 cells
         cells = mutableListOf()
         for (i in 6..11) {
             cells.add(MutableList(i) { null })
@@ -56,7 +56,6 @@ class Board {
     private fun isValidMove(position: Position, color: PieceColor) : Boolean {
         val x = position.x
         val y = if (x < 6) position.y else position.y - x + 5
-        Log.d("Board", "get knight moves: x: %d, y: %d".format(x, y))
         if (x !in cells.indices || y !in cells[x].indices) return false
         if (cells[x][y] == null || cells[x][y]?.color != color) return true
         return false
@@ -77,28 +76,37 @@ class Board {
                 availableMoves.addAll(getRookMoves(position, piece.color))
             }
 
-            PieceType.King -> availableMoves.addAll(getKingMoves(x, y))
+            PieceType.King -> availableMoves.addAll(getKingMoves(position, piece.color))
         }
         return availableMoves
     }
 
-    private fun getKingMoves(x: Int, y: Int): Collection<Position> {
-        return emptyList()
-//        return listOf(
-//            Position(1, 1), Position(-1, -2), Position(-1, 1), Position(1, -2), Position(2, -1), Position(-2, -1),
-//            Position(0, 1), Position(0, -1), Position(1, 0), Position(-1, 0), Position(-1, -1), Position(1, -1)
-//        )
+    private fun getKingMoves(position: Position, color: PieceColor): Collection<Position> {
+        val (x, y) = position
+        return listOf(
+            Position(x, y + 1, false),
+            Position(x + 1, y + 1, false),
+            Position(x + 1, y, false),
+            Position(x,y - 1, false),
+            Position(x - 1,y - 1, false),
+            Position(x - 1, y, false),
+            Position( x - 1, y + 1, false),
+            Position(x + 1, y + 2, false),
+            Position(x + 2, y + 1, false),
+            Position(x + 1, y - 1, false),
+            Position(x - 1, y - 2, false),
+            Position(x - 2, y - 1, false)
+        ).filter { elem -> isValidMove(elem, color) }
     }
 
     private fun getKnightMoves(position: Position, color: PieceColor): Collection<Position> {
         val (x, y) = position
-        Log.d("Board", "knight position: x: %d, y: %d".format(x, y))
-        val moves = listOf(
+        return listOf(
             Position(x + 1, y + 3, withOffset = false),
             Position(x + 2, y + 3, withOffset = false),
             Position(x + 3, y + 2, withOffset = false),
             Position(x + 3, y + 1, withOffset = false),
-            Position(x + 2 , y - 1, withOffset = false),
+            Position(x + 2 ,y - 1, withOffset = false),
             Position(x + 1, y - 2, withOffset = false),
             Position(x - 1, y - 3, withOffset = false),
             Position(x - 2, y - 3, withOffset = false),
@@ -106,9 +114,8 @@ class Board {
             Position(x - 3, y - 1, withOffset = false),
             Position(x - 2, y + 1, withOffset = false),
             Position(x - 1, y + 2, withOffset = false),
-        )
+        ).filter { elem -> isValidMove(elem, color) }
 
-        return moves.filter { elem -> isValidMove(elem, color) }
     }
 
     private fun getRookMoves(position: Position, color: PieceColor): Collection<Position> {

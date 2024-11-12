@@ -18,13 +18,15 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.hexchess.backend.authorization.TokenManager
 import com.example.hexchess.backend.authorization.UserNameManager
+import com.example.hexchess.backend.gamemanager.GameManager
 import com.example.hexchess.frontend.navigation.navigateToEnterMenu
+import com.example.hexchess.frontend.navigation.navigateToOnlineGame
 
 private const val TAG = "Main Menu Screen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainMenuScreen(navController: NavController) {
+fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
     val context = LocalContext.current
     val tokenManager = remember { TokenManager(context) }
     val tokenFlow = remember { tokenManager.getToken() }
@@ -61,7 +63,7 @@ fun MainMenuScreen(navController: NavController) {
         ) {
             Button(
                 onClick = {
-                    // TODO
+                    navController.navigateToOnlineGame()
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
