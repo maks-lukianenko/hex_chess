@@ -13,12 +13,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,8 +40,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -46,36 +55,93 @@ import com.example.hexchess.backend.onlinegame.Piece
 import com.example.hexchess.backend.onlinegame.PieceColor
 import com.example.hexchess.backend.onlinegame.PieceType
 import com.example.hexchess.backend.onlinegame.Position
+import com.example.hexchess.frontend.loading.LoadingScreen
 import com.example.hexchess.frontend.navigation.navigateToMainMenu
 import com.example.hexchess.ui.theme.LightCoral
 
 val viewModel: OnlineGameViewModel = OnlineGameViewModel()
 private const val TAG = "Online game screen"
 
-private val whiteSideColor: ArrayList<Color> = arrayListOf(Color.DarkGray, Color.White, Color.LightGray)
-private val blackSideColor: ArrayList<Color> = arrayListOf(Color.White, Color.DarkGray, Color.LightGray)
+private val whiteSideColor = arrayListOf(Color.DarkGray, Color.White, Color.LightGray)
+private val blackSideColor = arrayListOf(Color.White, Color.DarkGray, Color.LightGray)
+private val SIZE = 45
 
 
 @Composable
 fun OnlineGameScreen(navController: NavHostController = rememberNavController(), gameManager: GameManager) {
+    // State to track loading status
+    var isLoading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        gameManager.connectToGame("a116c6")
+    // Listen to game manager messages to handle loading state
+    LaunchedEffect(key1=gameManager.isWaiting) {
+        isLoading = gameManager.isWaiting
     }
+
+    fun onCancel() {
+        gameManager.disconnect()
+        navController.navigateToMainMenu()
+    }
+
+
+    if (isLoading) {
+        LoadingScreen(onCancel = { onCancel() })
+    } else {
+        MainGameScreen(navController, gameManager)
+    }
+}
+
+
+@Composable
+fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
+    var isConnected by remember { mutableStateOf(true) }
 
     viewModel.boardUpdate(gameManager.board.cells)
-    var chosenPosition by remember {
-        mutableStateOf<Position?>(null)
-    }
-
-    val setPosition: (Position?) -> Unit = { position ->
-        chosenPosition = position
-    }
 
 
     LaunchedEffect(key1 = gameManager.board.cells) {
         viewModel.boardUpdate(gameManager.board.cells)
     }
+
+
+    LaunchedEffect(key1 = gameManager.isConnected) {
+        isConnected = gameManager.isConnected
+
+    }
+    if (!isConnected) {
+        Dialog(onDismissRequest = { navController.navigateToMainMenu() }) {
+            Card(
+                modifier = Modifier
+                    .width(300.dp)
+                    .height(150.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Opponent Disconnected",
+                        textAlign = TextAlign.Center,
+                        fontSize = 18.sp
+                    )
+                    Button(onClick = {
+                        gameManager.disconnect()
+                        isConnected = true
+                        navController.navigateToMainMenu()
+                    }) {
+                        Text(
+                            text = "OK",
+                            textAlign = TextAlign.Center,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+
 
     Box(modifier = Modifier
         .fillMaxSize()
@@ -83,10 +149,9 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
 
     ) {
         val configuration = LocalConfiguration.current
-        val size = 45
-        val radius = size / 2
+        val radius = SIZE / 2
         val verticalPadding = radius * Math.sqrt(3.0) / 2
-        val horizontalPadding = 3 * size / 4
+        val horizontalPadding = 3 * SIZE / 4
         val centerX = configuration.screenWidthDp.dp / 2 - (horizontalPadding / 2).dp
         val startTop = 50.dp
         val cells = remember {
@@ -103,28 +168,23 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
                 )
             }
         }
-        BoardColumn(columnIndex = 5, startColor = 0, top = startTop, start = centerX, size = size, columnCells = cells[5], setPosition, chosenPosition, gameManager)
+        BoardColumn(x = 5, startColor = 0, top = startTop, start = centerX,  columnCells = cells[5], gameManager)
         for (i in 1..5) {
-            val columnOffset = if (viewModel.color=="black") -i else i
+            val columnOffset = if (gameManager.color=="black") -i else i
             BoardColumn(
-                columnIndex = 5 + columnOffset,
+                x = 5 + columnOffset,
                 startColor = (6 - i),
                 top = startTop + (i * verticalPadding).dp,
                 start = centerX + (i * horizontalPadding).dp,
-                size = size, columnCells = cells[5 + columnOffset],
-                setPosition,
-                chosenPosition,
+                columnCells = cells[5 + columnOffset],
                 gameManager
             )
             BoardColumn(
-                columnIndex = 5 + columnOffset,
+                x = 5 - columnOffset,
                 startColor = (6 - i),
                 top = startTop + (i * verticalPadding).dp,
                 start = centerX - (i * horizontalPadding).dp,
-                size = size,
-                columnCells = cells[5 + columnOffset],
-                setPosition,
-                chosenPosition,
+                columnCells = cells[5 - columnOffset],
                 gameManager
             )
         }
@@ -133,17 +193,13 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
 
 @Composable
 fun PieceView(
-    sizeOfItem: Dp,
     color: Color,
     piece: Piece?,
-    x: Int, y: Int,
-    setPosition: (Position?) -> Unit,
-    chosenPosition: Position?,
+    position: Position,
     gameManager: GameManager
 ) {
-    // column indexes are from A to L( for us it's x )
-    // y for us means row
 
+    val sizeOfItem = SIZE.dp
     val hexagon = remember {
         RoundedPolygon(6)
     }
@@ -161,8 +217,6 @@ fun PieceView(
         null -> R.drawable.empty
     }
 
-    val position = Position(x, y)
-
     Box (
         modifier = Modifier
             .border(1.dp, Color.Black, RoundedPolygonShape(polygon = hexagon))
@@ -176,19 +230,15 @@ fun PieceView(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) {
-                Log.d(TAG, "BOX x:%d y:%d".format(position.x, position.y))
-                if (chosenPosition != null && position in viewModel.availableMoves) {
-                    val (fx, fy) = chosenPosition.getWithoutOffset()
-                    gameManager.sendMove(fx, fy, x, y, "test") // TODO put username as parameter
+                if (viewModel.chosenPosition != null && position in viewModel.availableMoves && gameManager.isPlayerTurn) {
+                    val (fx, fy) = viewModel.chosenPosition!!.getWithoutOffset()
+                    val (tx, ty) = position.getWithoutOffset()
+                    gameManager.sendMove(fx, fy, tx, ty, "test") // TODO put username as parameter
                     viewModel.availableMoves.clear()
-                    Log.d(
-                        TAG,
-                        "Chosen position x:%d y:%d".format(chosenPosition.x, chosenPosition.y)
-                    )
+                    viewModel.chosenPosition = null
                 } else {
                     Log.d(TAG, "Chosen position is NULL")
                 }
-                setPosition(null)
             }
     ) {
         if (piece != null) {
@@ -204,8 +254,7 @@ fun PieceView(
                     }
                     .size(sizeOfItem)
                     .clickable {
-                        Log.d(TAG, "IMAGE x:%d y:%d".format(x, y))
-                        setPosition(position)
+                        viewModel.chosenPosition = position
                         viewModel.updateAvailableMoves(gameManager.getAvailableMoves(position))
                     }
             )
@@ -229,14 +278,11 @@ fun PieceView(
 
 @Composable
 fun BoardColumn (
-    columnIndex: Int,
+    x: Int,
     startColor: Int,
     top: Dp,
     start: Dp,
-    size: Int,
     columnCells: MutableList<Piece?>,
-    setPosition: (Position?) -> Unit,
-    chosenPosition: Position?,
     gameManager: GameManager
 ) {
 
@@ -249,21 +295,12 @@ fun BoardColumn (
             .fillMaxHeight(),
         verticalArrangement = Arrangement.spacedBy((-7).dp)
     ) {
-        if (viewModel.color == "white") {
-            val colors: ArrayList<Color> = arrayListOf(Color.DarkGray, Color.White, Color.LightGray)
-            columnCells.forEachIndexed { i, _ ->
-                // column indexes are from A to L( for us it's x )
-                // y for us means row
-                PieceView(size.dp, colors[(i + startColor) % 3], columnCells[columnSize - 1 - i], columnIndex, columnSize - i - 1, setPosition, chosenPosition, gameManager)
-            }
-
-        } else {
-            val colors: ArrayList<Color> = arrayListOf(Color.White, Color.DarkGray, Color.LightGray)
-            columnCells.forEachIndexed { i, _ ->
-                // column indexes are from A to L( for us it's x )
-                // y for us means row
-                PieceView(size.dp, colors[(i + startColor) % 3], columnCells[i], columnIndex, i, setPosition, chosenPosition, gameManager)
-            }
+        val colors = if (gameManager.color == "white") whiteSideColor else blackSideColor
+        // column indexes are from A to K( for us it's x )
+        // y for us means row
+        columnCells.forEachIndexed { i, _ ->
+            val y = if (gameManager.color == "white") columnSize - 1 - i else i
+            PieceView(colors[(i + startColor) % 3], columnCells[y], Position(x, y), gameManager)
         }
     }
 }

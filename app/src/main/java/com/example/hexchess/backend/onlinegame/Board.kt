@@ -10,6 +10,12 @@ class Board {
         setupHexBoard()
     }
 
+    fun resetBoard() {
+        cells.clear()
+        initializeHexBoard()
+        setupHexBoard()
+    }
+
     private fun initializeHexBoard() { // Init classic hex bord with 71 cells
         cells = mutableListOf()
         for (i in 6..11) {
@@ -176,5 +182,11 @@ class Board {
             }
         }
         return availableMoves
+    }
+
+    private fun isBlockedField(position: Position, color: PieceColor) : Boolean {
+
+//        TODO isBlockedField for king available moves
+        return false
     }
 }

@@ -1,6 +1,8 @@
 package com.example.hexchess.frontend.authorization
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.hexchess.backend.authorization.LoginRequest
@@ -26,7 +28,7 @@ class AuthorizationViewModel : ViewModel() {
     private val client = OkHttpClient()
 
 
-    fun onLoginClicked(username: String, password: String, context: Context) {
+    fun onLoginClicked(username: String, password: String, context: Context, onLoginSuccess: () -> Unit, onLoginFailure: (String) -> Unit) {
         val loginRequest = LoginRequest(username, password)
         val requestBody = gson.toJson(loginRequest).toRequestBody(JSON)
         val tokenManager = TokenManager(context)
@@ -47,15 +49,25 @@ class AuthorizationViewModel : ViewModel() {
                             userNameManager.saveUsername(username)
                         }
                         Log.d(TAG, "Login successful: ${tokenResponse.accessToken}")
-                        // Save tokens and proceed to next screen
+                        Handler(Looper.getMainLooper()).post {
+                            onLoginSuccess()
+                        }
                     } else {
-                        Log.d(TAG, "Login failed: ${it.message}")
+                        val errorMessage = it.body?.string() ?: "Unknown error occurred"
+                        Log.d(TAG, "Login failed: $errorMessage")
+                        Handler(Looper.getMainLooper()).post {
+                            onLoginFailure(errorMessage)
+                        }
+
                     }
                 }
             }
 
             override fun onFailure(call: okhttp3.Call, e: IOException) {
                 Log.d(TAG, "Login error: ${e.message}")
+                Handler(Looper.getMainLooper()).post {
+                    onLoginFailure(e.message ?: "Network error")
+                }
             }
         })
     }
@@ -67,7 +79,7 @@ class AuthorizationViewModel : ViewModel() {
         val userNameManager = UserNameManager(context)
 
         val request = Request.Builder()
-            .url("http://192.168.56.1:8000/players/register/")
+            .url("http://169.254.101.110:8000/players/register/")
             .post(requestBody)
             .build()
 

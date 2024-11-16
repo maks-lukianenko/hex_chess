@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -36,7 +37,11 @@ fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
     val usernameFlow = remember { userNameManager.getUsername() }
     val username by usernameFlow.collectAsState(initial = null)
 
-    Log.d(TAG, "Token: $token")
+    LaunchedEffect(key1 = token) {
+        if (token != null) {
+            gameManager.token = token
+        }
+    }
 
 
     Scaffold(
@@ -63,6 +68,7 @@ fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
         ) {
             Button(
                 onClick = {
+                    gameManager.connectToGame()
                     navController.navigateToOnlineGame()
                 },
                 modifier = Modifier
@@ -73,7 +79,7 @@ fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
             }
             Button(
                 onClick = {
-                    // TODO
+                    TODO()
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.6f)

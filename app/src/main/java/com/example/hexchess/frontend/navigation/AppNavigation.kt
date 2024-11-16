@@ -28,11 +28,11 @@ sealed class Screen(val route: String) {
 }
 
 val screens = listOf(
-    Screen.OnlineGame,
-    Screen.MainMenu,
     Screen.EnterMenu,
     Screen.LoginMenu,
     Screen.RegisterMenu,
+    Screen.OnlineGame,
+    Screen.MainMenu,
 )
 
 @Composable

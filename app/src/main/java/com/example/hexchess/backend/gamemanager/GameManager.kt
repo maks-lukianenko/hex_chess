@@ -1,7 +1,9 @@
 package com.example.hexchess.backend.gamemanager
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.example.hexchess.backend.onlinegame.Board
-import com.example.hexchess.backend.onlinegame.Piece
 import com.example.hexchess.backend.onlinegame.Position
 import  okhttp3.OkHttpClient
 import okhttp3.Request
@@ -15,14 +17,20 @@ private const val TAG = "Game Manager"
 class GameManager {
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
+    var isWaiting by mutableStateOf(true)
+    var isConnected by mutableStateOf(true)
+    var token: String? = ""
     val board = Board()
+    var color = "white"
+    var isPlayerTurn = true
 
-    fun connectToGame(gameCode: String) {
-        val token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzMxNDY5NTc1LCJpYXQiOjE3MzE0MjYzNzUsImp0aSI6IjQzMzAwYzQ3MTJkZTQyOTk5M2M3ODU4NTlkMTBiYzkxIiwidXNlcl9pZCI6M30.JF1yx9dNC8jLZ66Nje6ZPN9fpMWQuFbig6d0OsF5pzs"
+    fun connectToGame() {
+        board.resetBoard()
         val request = Request.Builder().url("ws://192.168.56.1:8000/ws/games/match/")
             .addHeader("Authorization", "Bearer $token")
             .build()
         webSocket = client.newWebSocket(request, ChessWebSocketListener())
+        isConnected = true
     }
 
     fun disconnect() {
@@ -64,10 +72,21 @@ class GameManager {
                     updateBoard(from, to)
                 }
                 "game_waiting" -> {
-                    val gameCode = data.getString("game_code")
-                    val playerColor = data.getString("player_color")
-                    Log.d(TAG, "Game with code $gameCode was created")
-                    Log.d(TAG, "Your color is $playerColor")
+                    isWaiting = true
+                    Log.d(TAG, "Waiting for opponent")
+                }
+                "game_start" -> {
+                    isWaiting = false
+                    color = data.getString("color")
+                    Log.d(TAG, "Opponent found")
+                    Log.d(TAG, "Your color is ${data.getString("color")}")
+                }
+                "turn_update" -> {
+                    isPlayerTurn = data.getString("current_turn") == color
+                }
+                "opponent_disconnected" -> {
+                    isConnected=false
+                    Log.d(TAG, "Opponent disconnected")
                 }
             }
             Log.d(TAG, "ON MESSAGE")
@@ -80,6 +99,7 @@ class GameManager {
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
             webSocket.close(1000, null)
             Log.d(TAG, "Closing: $code / $reason")
+            isConnected = false
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: okhttp3.Response?) {

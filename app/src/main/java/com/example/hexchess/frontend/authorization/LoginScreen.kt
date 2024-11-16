@@ -1,6 +1,7 @@
 package com.example.hexchess.frontend.authorization
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -122,8 +123,21 @@ fun LoginScreen(navController: NavHostController = rememberNavController()) {
 
             Button(
                 onClick = {
-                    viewModel.onLoginClicked(username, password, context)
-                    navController.navigateToMainMenu()
+                    viewModel.onLoginClicked(
+                        username,
+                        password,
+                        context,
+                        onLoginSuccess = {
+                            // Navigate to main menu on success
+                            navController.navigateToMainMenu()
+                            Log.d(TAG, "Login successful, navigating to main menu")
+                        },
+                        onLoginFailure = { errorMessage ->
+                            // Show an error message or handle failure UI
+                            Log.d(TAG, "Login failed: $errorMessage")
+                            Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
+                        }
+                    )
                     Log.d(TAG,"Pressed Login")
                 },
                 modifier = Modifier.fillMaxWidth()
