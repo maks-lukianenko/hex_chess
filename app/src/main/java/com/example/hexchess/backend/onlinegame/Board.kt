@@ -2,6 +2,8 @@ package com.example.hexchess.backend.onlinegame
 
 import android.util.Log
 
+private val TAG = "BOARD"
+
 class Board {
     lateinit var cells: MutableList<MutableList<Piece?>>
 
@@ -67,6 +69,14 @@ class Board {
         return false
     }
 
+    private fun isPawnCapture(position: Position, color: PieceColor) : Boolean {
+        val x = position.x
+        val y = if (x < 6) position.y else position.y - x + 5
+        if (x !in cells.indices || y !in cells[x].indices) return false
+        if (cells[x][y] != null && cells[x][y]?.color != color) return true
+        return false
+    }
+
     fun getAvailableMoves(position: Position): List<Position> {
         val (x, y) = position.getWithoutOffset()
         val piece = cells[x][y] ?: return emptyList()
@@ -102,7 +112,7 @@ class Board {
             Position(x + 1, y - 1, false),
             Position(x - 1, y - 2, false),
             Position(x - 2, y - 1, false)
-        ).filter { elem -> isValidMove(elem, color) }
+        ).filter { elem -> isValidMove(elem, color) && !isBlockedField(elem, color) }
     }
 
     private fun getKnightMoves(position: Position, color: PieceColor): Collection<Position> {
@@ -167,26 +177,117 @@ class Board {
     private fun getPawnMoves(position: Position, color: PieceColor): Collection<Position> {
         val availableMoves = mutableListOf<Position>()
         val (x, y) = position.getWithoutOffset()
+        val (wx, wy) = position
         val boardHeight = cells[x].size
 
         if (color == PieceColor.Black) {
             if (y > 0 && cells[x][y - 1] == null) {
                 availableMoves.add(Position(x, y - 1))
-                if (y  > 1 && cells[x][y - 2] == null && cells[x][y]!!.isFirstTurn) availableMoves.add(Position(x, y - 2))
+                if (y > 1 && cells[x][y - 2] == null && cells[x][y]!!.isFirstTurn) availableMoves.add(Position(x, y - 2))
             }
-
+            if (isPawnCapture(Position(wx - 1, wy - 1, false), color)) availableMoves.add(Position(wx - 1, wy - 1, false))
+            if (isPawnCapture(Position(wx + 1, wy, false), color)) availableMoves.add(Position(wx + 1, wy, false))
         } else {
             if (y < boardHeight - 1 && cells[x][y + 1] == null) {
-                availableMoves.add(Position(x, y + 1))
-                if (y < boardHeight - 2  && cells[x][y + 2] == null && cells[x][y]!!.isFirstTurn) availableMoves.add(Position(x, y + 2))
+                availableMoves.add(Position(x, y +  1))
+                if (y < boardHeight - 2 && cells[x][y + 2] == null && cells[x][y]!!.isFirstTurn) availableMoves.add(
+                    Position(x, y + 2)
+                )
             }
+            if (isPawnCapture(Position(wx - 1, wy, false), color)) availableMoves.add(Position(wx - 1, wy, false))
+            if (isPawnCapture(Position(wx + 1, wy + 1, false), color)) availableMoves.add(Position(wx + 1, wy + 1, false))
         }
         return availableMoves
     }
 
-    private fun isBlockedField(position: Position, color: PieceColor) : Boolean {
+    private fun isPawnField(position: Position, color: PieceColor) : Boolean {
+        val x = position.x
+        val y = if (x < 6) position.y else position.y - x + 5
+        if (x !in cells.indices || y !in cells[x].indices) return false
+        if (cells[x][y] != null && cells[x][y]?.color != color && cells[x][y]?.type == PieceType.Pawn) return true
+        return false
+    }
 
-//        TODO isBlockedField for king available moves
+    private fun blockDefendingPieces() {
+        // TODO use function isBlockedField for check if after piece move King can't be captured
+    }
+
+    private fun isBlockedField(position: Position, color: PieceColor) : Boolean {
+        val (x, y) = position
+
+        // Check enemy pawns block
+        if (color == PieceColor.White) {
+            if (isPawnField(Position(x - 1, y, false), color) || isPawnField(Position(x + 1, y + 1, false), color)) return true
+        } else {
+            if (isPawnField(Position(x - 1, y - 1, false), color) || isPawnField(Position(x + 1, y, false), color)) return true
+        }
+
+        // Check bishop and queen block
+        listOf(
+            Pair(1, 2), Pair(2, 1), Pair(1, -1), Pair(-1, -2), Pair(-2, -1), Pair(-1, 1)
+        ).forEach { (dx, dy) ->
+            var nx = x + dx
+            var ny = y + dy
+            var noy = if (nx > 5) ny - nx + 5 else ny
+            var firstIter = true
+            while (nx in cells.indices && noy in cells[nx].indices) {
+                if (cells[nx][noy] != null) {
+                    if (cells[nx][noy]!!.color == color) break
+                    if (firstIter && cells[nx][noy]!!.type == PieceType.King) return true
+                    if (cells[nx][noy]!!.type == PieceType.Bishop || cells[nx][noy]!!.type == PieceType.Queen) return true else break
+                }
+                firstIter = false
+                nx += dx
+                ny += dy
+                noy = if (nx > 5) ny - nx + 5 else ny
+            }
+        }
+
+        // Check rook and queen block
+        listOf(
+            Pair(0, 1), Pair(1, 1), Pair(1, 0), Pair(0, -1), Pair(-1, -1), Pair(-1, 0)
+        ).forEach { (dx, dy) ->
+            var nx = x + dx
+            var ny = y + dy
+            var noy = if (nx > 5) ny - nx + 5 else ny
+            var firstIter = true
+            while (nx in cells.indices && noy in cells[nx].indices) {
+                if (cells[nx][noy] != null) {
+                    if (cells[nx][noy]!!.color == color ) break
+                    if (firstIter && cells[nx][noy]!!.type == PieceType.King) return true
+                    if (cells[nx][noy]!!.type == PieceType.Rook || cells[nx][noy]!!.type == PieceType.Queen) return true else break
+                }
+                firstIter = false
+                nx += dx
+                ny += dy
+                noy = if (nx > 5) ny - nx + 5 else ny
+            }
+        }
+
+        // Check knight block
+        val possibleKnightPositions = listOf(
+            Position(x + 1, y + 3, withOffset = false),
+            Position(x + 2, y + 3, withOffset = false),
+            Position(x + 3, y + 2, withOffset = false),
+            Position(x + 3, y + 1, withOffset = false),
+            Position(x + 2 ,y - 1, withOffset = false),
+            Position(x + 1, y - 2, withOffset = false),
+            Position(x - 1, y - 3, withOffset = false),
+            Position(x - 2, y - 3, withOffset = false),
+            Position(x - 3, y - 2, withOffset = false),
+            Position(x - 3, y - 1, withOffset = false),
+            Position(x - 2, y + 1, withOffset = false),
+            Position(x - 1, y + 2, withOffset = false),
+        )
+
+        possibleKnightPositions.forEach { elem ->
+            val nx = elem.x
+            val ny = if (nx > 5) elem.y - nx + 5 else elem.y
+            if (nx in cells.indices && ny in cells[nx].indices) {
+                if (cells[nx][ny] != null && cells[nx][ny]?.color != color && cells[nx][ny]?.type == PieceType.Knight) return true
+            }
+        }
+
         return false
     }
 }
