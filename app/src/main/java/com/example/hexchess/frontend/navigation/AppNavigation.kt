@@ -7,6 +7,7 @@ import com.example.hexchess.backend.gamemanager.GameManager
 import com.example.hexchess.frontend.authorization.EnterScreen
 import com.example.hexchess.frontend.authorization.LoginScreen
 import com.example.hexchess.frontend.authorization.RegistrationScreen
+import com.example.hexchess.frontend.mainmenu.HistoryScreen
 import com.example.hexchess.frontend.mainmenu.MainMenuScreen
 import com.example.hexchess.frontend.onlinegame.OnlineGameScreen
 
@@ -25,13 +26,15 @@ sealed class Screen(val route: String) {
     data object RegisterMenu : Screen("RegistrationScreen")
     data object MainMenu : Screen("MainMenuScreen")
     data object OnlineGame : Screen("OnlineGameScreen")
+    data object MatchHistory : Screen("HistoryScreen")
 }
 
 val screens = listOf(
+    Screen.MatchHistory,
+    Screen.OnlineGame,
     Screen.EnterMenu,
     Screen.LoginMenu,
     Screen.RegisterMenu,
-    Screen.OnlineGame,
     Screen.MainMenu,
 )
 
@@ -43,6 +46,7 @@ fun HandleScreen(screen: Screen, navController: NavHostController, gameManager: 
         is Screen.RegisterMenu -> RegistrationScreen(navController = navController)
         is Screen.MainMenu -> MainMenuScreen(navController = navController, gameManager = gameManager)
         is Screen.OnlineGame -> OnlineGameScreen(navController = navController, gameManager = gameManager)
+        is Screen.MatchHistory -> HistoryScreen(navController = navController)
     }
 }
 
@@ -64,4 +68,8 @@ fun NavController.navigateToRegistrationMenu() {
 
 fun NavController.navigateToEnterMenu() {
     navigate("EnterScreen")
+}
+
+fun NavController.navigateToMatchHistory() {
+    navigate("HistoryScreen")
 }

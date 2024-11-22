@@ -98,7 +98,7 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
     viewModel.boardUpdate(gameManager.board.cells)
 
 
-    LaunchedEffect(key1 = gameManager.board.cells) {
+    LaunchedEffect(key1 = gameManager.isPlayerTurn) {
         viewModel.boardUpdate(gameManager.board.cells)
     }
 
@@ -128,6 +128,7 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
                     )
                     Button(onClick = {
                         gameManager.disconnect()
+                        viewModel.availableMoves.clear()
                         isConnected = true
                         navController.navigateToMainMenu()
                     }) {
@@ -160,6 +161,7 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
         Row {
             IconButton(onClick = {
                 gameManager.disconnect()
+                viewModel.availableMoves.clear()
                 navController.navigateToMainMenu()
             }) {
                 Icon(
@@ -233,7 +235,7 @@ fun PieceView(
                 if (viewModel.chosenPosition != null && position in viewModel.availableMoves && gameManager.isPlayerTurn) {
                     val (fx, fy) = viewModel.chosenPosition!!.getWithoutOffset()
                     val (tx, ty) = position.getWithoutOffset()
-                    gameManager.sendMove(fx, fy, tx, ty, "test") // TODO put username as parameter
+                    gameManager.sendMove(fx, fy, tx, ty)
                     viewModel.availableMoves.clear()
                     viewModel.chosenPosition = null
                 } else {

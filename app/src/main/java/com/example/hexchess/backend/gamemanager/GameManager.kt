@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.hexchess.backend.onlinegame.Board
+import com.example.hexchess.backend.onlinegame.PieceType
 import com.example.hexchess.backend.onlinegame.Position
 import  okhttp3.OkHttpClient
 import okhttp3.Request
@@ -20,6 +21,7 @@ class GameManager {
     var isWaiting by mutableStateOf(true)
     var isConnected by mutableStateOf(true)
     var token: String? = ""
+    var username: String? = ""
     val board = Board()
     var color = "white"
     var isPlayerTurn = true
@@ -41,7 +43,7 @@ class GameManager {
         webSocket = null
     }
 
-    fun sendMove(fx: Int, fy: Int, tx: Int, ty: Int, username: String) {
+    fun sendMove(fx: Int, fy: Int, tx: Int, ty: Int) {
         val moveJson = JSONObject().apply {
             put("username", username)
             put("type", "make_move")
@@ -78,6 +80,7 @@ class GameManager {
                 "game_start" -> {
                     isWaiting = false
                     color = data.getString("color")
+                    board.setKingPosition(data.getString("color"))
                     Log.d(TAG, "Opponent found")
                     Log.d(TAG, "Your color is ${data.getString("color")}")
                 }
@@ -103,6 +106,7 @@ class GameManager {
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: okhttp3.Response?) {
+            isConnected = false
             Log.d(TAG, "Error: ${t.message}")
         }
     }
@@ -115,6 +119,7 @@ class GameManager {
         // Move piece on the board
         board.cells[fx][fy]!!.isFirstTurn = false
         board.cells[tx][ty] = board.cells[fx][fy]
+        if (board.cells[tx][ty]!!.type == PieceType.King) board.kingPosition = Position(tx, ty)
         board.cells[fx][fy] = null
     }
 

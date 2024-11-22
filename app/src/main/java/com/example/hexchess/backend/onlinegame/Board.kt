@@ -6,6 +6,8 @@ private val TAG = "BOARD"
 
 class Board {
     lateinit var cells: MutableList<MutableList<Piece?>>
+    lateinit var kingPosition: Position
+    var isCheckMate = false
 
     init {
         initializeHexBoard()
@@ -77,9 +79,34 @@ class Board {
         return false
     }
 
+    fun setKingPosition(color: String) {
+        kingPosition = if (color=="white") Position(6, 0) else Position(6, 9)
+    }
+
+    fun checkForCheckMate(color: PieceColor) {
+        val (x, y) = kingPosition
+        val kingMoves = getAvailableMoves(kingPosition)
+        isCheckMate = isBlockedField(kingPosition, cells[x][y]!!.color) && kingMoves.isEmpty() && canBlock(color)
+
+    }
+
+    private fun canBlock(color: PieceColor): Boolean {
+        cells.forEachIndexed { x, column ->
+            column.forEachIndexed { y, piece ->
+                if (piece != null && cells[x][y]?.color == color) {
+                    val availablePieceMoves = getAvailableMoves(Position(x, y))
+                    if (availablePieceMoves.isNotEmpty()) return true
+                }
+            }
+        }
+
+        return false
+    }
+
     fun getAvailableMoves(position: Position): List<Position> {
         val (x, y) = position.getWithoutOffset()
         val piece = cells[x][y] ?: return emptyList()
+        if (piece.isBlocked) return emptyList()
         val availableMoves = mutableListOf<Position>()
 
         when (piece.type) {
@@ -91,9 +118,10 @@ class Board {
                 availableMoves.addAll(getBishopMoves(position, piece.color))
                 availableMoves.addAll(getRookMoves(position, piece.color))
             }
-
             PieceType.King -> availableMoves.addAll(getKingMoves(position, piece.color))
         }
+        if (piece.type != PieceType.King) availableMoves.filter { elem -> isSecureMove(position, elem, piece.color) }
+
         return availableMoves
     }
 
@@ -208,11 +236,24 @@ class Board {
         return false
     }
 
-    private fun blockDefendingPieces() {
-        // TODO use function isBlockedField for check if after piece move King can't be captured
+    private fun isSecureMove(from: Position, to: Position, color: PieceColor) : Boolean {
+        val (fx, fy) = from
+        val tx = to.x
+        val ty = if (tx < 6) to.y else to.y - tx + 5
+        val tempCells = cells
+        cells[tx][ty] = cells[fx][fy]
+        cells[fx][fy] = null
+        var flag = false
+        if (!isBlockedField(kingPosition, color)) {
+            flag = true
+        }
+        cells = tempCells
+        return flag
+
     }
 
-    private fun isBlockedField(position: Position, color: PieceColor) : Boolean {
+    // Function check can is this field on attack or not
+    private fun isBlockedField(position: Position, color: PieceColor, includeKnight: Boolean = true) : Boolean {
         val (x, y) = position
 
         // Check enemy pawns block
@@ -263,6 +304,8 @@ class Board {
                 noy = if (nx > 5) ny - nx + 5 else ny
             }
         }
+
+        if (!includeKnight) return false
 
         // Check knight block
         val possibleKnightPositions = listOf(

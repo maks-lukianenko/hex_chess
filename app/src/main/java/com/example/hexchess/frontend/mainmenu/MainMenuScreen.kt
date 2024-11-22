@@ -37,12 +37,10 @@ fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
     val usernameFlow = remember { userNameManager.getUsername() }
     val username by usernameFlow.collectAsState(initial = null)
 
-    LaunchedEffect(key1 = token) {
-        if (token != null) {
-            gameManager.token = token
-        }
+    LaunchedEffect(key1 = token, key2 = username) {
+        if (token != null) gameManager.token = token
+        if (username != null) gameManager.username = username
     }
-
 
     Scaffold(
         topBar = {
@@ -76,16 +74,6 @@ fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
                     .padding(vertical = 8.dp)
             ) {
                 Text(text = "Play Online")
-            }
-            Button(
-                onClick = {
-                    TODO()
-                },
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .padding(vertical = 8.dp)
-            ) {
-                Text(text = "Find Game")
             }
             Button(
                 onClick = {

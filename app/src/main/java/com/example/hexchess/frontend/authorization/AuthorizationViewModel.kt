@@ -40,28 +40,27 @@ class AuthorizationViewModel : ViewModel() {
             .build()
 
         client.newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                response.use {
-                    if (it.isSuccessful) {
-                        val tokenResponse = gson.fromJson(it.body?.string(), TokenResponse::class.java)
-                        CoroutineScope(Dispatchers.IO).launch {
-                            tokenManager.saveToken(tokenResponse.accessToken)
-                            userNameManager.saveUsername(username)
+                override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                    response.use {
+                        if (it.isSuccessful) {
+                            val tokenResponse = gson.fromJson(it.body?.string(), TokenResponse::class.java)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                tokenManager.saveToken(tokenResponse.accessToken)
+                                userNameManager.saveUsername(username)
+                            }
+                            Log.d(TAG, "Login successful: ${tokenResponse.accessToken}")
+                            Handler(Looper.getMainLooper()).post {
+                                onLoginSuccess()
+                            }
+                        } else {
+                            val errorMessage = it.body?.string() ?: "Unknown error occurred"
+                            Log.d(TAG, "Login failed: $errorMessage")
+                            Handler(Looper.getMainLooper()).post {
+                                onLoginFailure(errorMessage)
+                            }
                         }
-                        Log.d(TAG, "Login successful: ${tokenResponse.accessToken}")
-                        Handler(Looper.getMainLooper()).post {
-                            onLoginSuccess()
-                        }
-                    } else {
-                        val errorMessage = it.body?.string() ?: "Unknown error occurred"
-                        Log.d(TAG, "Login failed: $errorMessage")
-                        Handler(Looper.getMainLooper()).post {
-                            onLoginFailure(errorMessage)
-                        }
-
                     }
                 }
-            }
 
             override fun onFailure(call: okhttp3.Call, e: IOException) {
                 Log.d(TAG, "Login error: ${e.message}")
