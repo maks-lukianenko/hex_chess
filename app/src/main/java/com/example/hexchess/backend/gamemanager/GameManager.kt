@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.hexchess.backend.onlinegame.Board
+import com.example.hexchess.backend.onlinegame.Piece
 import com.example.hexchess.backend.onlinegame.PieceType
 import com.example.hexchess.backend.onlinegame.Position
 import  okhttp3.OkHttpClient
@@ -24,7 +25,7 @@ class GameManager {
     var username: String? = ""
     val board = Board()
     var color = "white"
-    var isPlayerTurn = true
+    var isPlayerTurn by mutableStateOf(false)
 
     fun connectToGame() {
         board.resetBoard()
@@ -45,10 +46,19 @@ class GameManager {
 
     fun sendMove(fx: Int, fy: Int, tx: Int, ty: Int) {
         val moveJson = JSONObject().apply {
-            put("username", username)
             put("type", "make_move")
             put("from", coordsToChessNotation(fx, fy))
             put("to", coordsToChessNotation(tx, ty))
+        }
+        webSocket?.send(moveJson.toString())
+    }
+
+    fun sendPromotion(fx: Int, fy: Int, tx: Int, ty: Int, piece: String) {
+        val moveJson = JSONObject().apply {
+            put("type", "make_promotion")
+            put("from", coordsToChessNotation(fx, fy))
+            put("to", coordsToChessNotation(tx, ty))
+            put("piece", piece)
         }
         webSocket?.send(moveJson.toString())
     }
@@ -73,6 +83,12 @@ class GameManager {
                     Log.d(TAG, "Moved piece from $from to $to")
                     updateBoard(from, to)
                 }
+                "promotion_made" -> {
+                    val from = data.getString("from")
+                    val to = data.getString("to")
+                    val piece = data.getString("piece")
+                    updateBoard(from, to, piece)
+                }
                 "game_waiting" -> {
                     isWaiting = true
                     Log.d(TAG, "Waiting for opponent")
@@ -81,11 +97,13 @@ class GameManager {
                     isWaiting = false
                     color = data.getString("color")
                     board.setKingPosition(data.getString("color"))
+                    isPlayerTurn = color == "white"
                     Log.d(TAG, "Opponent found")
                     Log.d(TAG, "Your color is ${data.getString("color")}")
                 }
                 "turn_update" -> {
                     isPlayerTurn = data.getString("current_turn") == color
+                    Log.d(TAG, "TURN: ${data.getString("current_turn")}")
                 }
                 "opponent_disconnected" -> {
                     isConnected=false
@@ -112,20 +130,33 @@ class GameManager {
     }
 
 
-    private fun updateBoard(from: String, to: String) {
+    private fun updateBoard(from: String, to: String, piecePromotion: String = "") {
         val (fx, fy) = chessNotationToCoords(from)
         val (tx, ty) = chessNotationToCoords(to)
 
         // Move piece on the board
-        board.cells[fx][fy]!!.isFirstTurn = false
-        board.cells[tx][ty] = board.cells[fx][fy]
-        if (board.cells[tx][ty]!!.type == PieceType.King) board.kingPosition = Position(tx, ty)
-        board.cells[fx][fy] = null
+        if (piecePromotion == "") {
+            board.cells[fx][fy]!!.isFirstTurn = false
+            board.cells[tx][ty] = board.cells[fx][fy]
+            if (board.cells[tx][ty]!!.type == PieceType.King) board.kingPosition = Position(tx, ty)
+            board.cells[fx][fy] = null
+        } else {
+            val pieceType: PieceType = when (piecePromotion) {
+                "rook" -> PieceType.Rook
+                "bishop" -> PieceType.Bishop
+                "queen" -> PieceType.Queen
+                "knight" -> PieceType.Knight
+                else -> {PieceType.Pawn}
+            }
+            val pieceColor = board.cells[fx][fy]!!.color
+            board.cells[tx][ty] = Piece(pieceColor, pieceType, false)
+            board.cells[fx][fy] = null
+        }
     }
 
     private fun chessNotationToCoords(pos: String): Pair<Int, Int> {
         val column = pos[0]
-        val row = pos[1].toString().toInt()
+        val row = pos.substring(1).toInt()
         val x = column - 'a'
         val y = row - 1
         return Pair(x, y)
@@ -134,6 +165,8 @@ class GameManager {
     private fun coordsToChessNotation(x: Int, y: Int): String {
         val column = ('a' + x).toString()
         val row = (y + 1).toString()
+
+        Log.d(TAG, "Coords: $column$row")
 
         return column + row
     }

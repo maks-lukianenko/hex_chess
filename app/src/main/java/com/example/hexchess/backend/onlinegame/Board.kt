@@ -2,16 +2,18 @@ package com.example.hexchess.backend.onlinegame
 
 import android.util.Log
 
-private val TAG = "BOARD"
+private val TAG = "BOARD class"
 
 class Board {
     lateinit var cells: MutableList<MutableList<Piece?>>
+    var tempCells: MutableList<MutableList<Piece?>>
     lateinit var kingPosition: Position
     var isCheckMate = false
 
     init {
         initializeHexBoard()
         setupHexBoard()
+        tempCells = cells.toMutableList()
     }
 
     fun resetBoard() {
@@ -106,8 +108,8 @@ class Board {
     fun getAvailableMoves(position: Position): List<Position> {
         val (x, y) = position.getWithoutOffset()
         val piece = cells[x][y] ?: return emptyList()
-        if (piece.isBlocked) return emptyList()
         val availableMoves = mutableListOf<Position>()
+        tempCells = cells.toMutableList()
 
         when (piece.type) {
             PieceType.Pawn -> availableMoves.addAll(getPawnMoves(position, piece.color))
@@ -120,7 +122,14 @@ class Board {
             }
             PieceType.King -> availableMoves.addAll(getKingMoves(position, piece.color))
         }
-        if (piece.type != PieceType.King) availableMoves.filter { elem -> isSecureMove(position, elem, piece.color) }
+        if (piece.type != PieceType.King) {
+            val result = mutableListOf<Position>()
+            for (elem in availableMoves) {
+                if (isSecureMove(position, elem, piece.color)) result.add(elem)
+            }
+//            availableMoves.filter { elem -> isSecureMove(position, elem, piece.color) }
+            return result
+        }
 
         return availableMoves
     }
@@ -228,28 +237,33 @@ class Board {
         return availableMoves
     }
 
+    private fun isSecureMove(from: Position, to: Position, color: PieceColor) : Boolean {
+        val (fx, fy) = from.getWithoutOffset()
+        val tx = to.x
+        val ty = if (tx > 5) to.y - tx + 5 else to.y
+        val tempPiece = tempCells[tx][ty]
+        tempCells[tx][ty] = tempCells[fx][fy]
+        tempCells[fx][fy] = null
+        if (!isBlockedField(kingPosition, color)) {
+            tempCells[fx][fy] = tempCells[tx][ty]
+            tempCells[tx][ty] = tempPiece
+            return true
+        } else {
+            tempCells[fx][fy] = tempCells[tx][ty]
+            tempCells[tx][ty] = tempPiece
+            Log.d(TAG, "IS NOT SECURE MOVE FROM $fx, $fy TO $tx, $ty")
+            return false
+        }
+
+
+    }
+
     private fun isPawnField(position: Position, color: PieceColor) : Boolean {
         val x = position.x
         val y = if (x < 6) position.y else position.y - x + 5
-        if (x !in cells.indices || y !in cells[x].indices) return false
-        if (cells[x][y] != null && cells[x][y]?.color != color && cells[x][y]?.type == PieceType.Pawn) return true
+        if (x !in tempCells.indices || y !in tempCells[x].indices) return false
+        if (tempCells[x][y] != null && tempCells[x][y]?.color != color && tempCells[x][y]?.type == PieceType.Pawn) return true
         return false
-    }
-
-    private fun isSecureMove(from: Position, to: Position, color: PieceColor) : Boolean {
-        val (fx, fy) = from
-        val tx = to.x
-        val ty = if (tx < 6) to.y else to.y - tx + 5
-        val tempCells = cells
-        cells[tx][ty] = cells[fx][fy]
-        cells[fx][fy] = null
-        var flag = false
-        if (!isBlockedField(kingPosition, color)) {
-            flag = true
-        }
-        cells = tempCells
-        return flag
-
     }
 
     // Function check can is this field on attack or not
@@ -271,11 +285,11 @@ class Board {
             var ny = y + dy
             var noy = if (nx > 5) ny - nx + 5 else ny
             var firstIter = true
-            while (nx in cells.indices && noy in cells[nx].indices) {
-                if (cells[nx][noy] != null) {
-                    if (cells[nx][noy]!!.color == color) break
-                    if (firstIter && cells[nx][noy]!!.type == PieceType.King) return true
-                    if (cells[nx][noy]!!.type == PieceType.Bishop || cells[nx][noy]!!.type == PieceType.Queen) return true else break
+            while (nx in tempCells.indices && noy in tempCells[nx].indices) {
+                if (tempCells[nx][noy] != null) {
+                    if (tempCells[nx][noy]!!.color == color) break
+                    if (firstIter && tempCells[nx][noy]!!.type == PieceType.King) return true
+                    if (tempCells[nx][noy]!!.type == PieceType.Bishop || tempCells[nx][noy]!!.type == PieceType.Queen) return true else break
                 }
                 firstIter = false
                 nx += dx
@@ -292,11 +306,11 @@ class Board {
             var ny = y + dy
             var noy = if (nx > 5) ny - nx + 5 else ny
             var firstIter = true
-            while (nx in cells.indices && noy in cells[nx].indices) {
-                if (cells[nx][noy] != null) {
-                    if (cells[nx][noy]!!.color == color ) break
-                    if (firstIter && cells[nx][noy]!!.type == PieceType.King) return true
-                    if (cells[nx][noy]!!.type == PieceType.Rook || cells[nx][noy]!!.type == PieceType.Queen) return true else break
+            while (nx in tempCells.indices && noy in tempCells[nx].indices) {
+                if (tempCells[nx][noy] != null) {
+                    if (tempCells[nx][noy]!!.color == color ) break
+                    if (firstIter && tempCells[nx][noy]!!.type == PieceType.King) return true
+                    if (tempCells[nx][noy]!!.type == PieceType.Rook || tempCells[nx][noy]!!.type == PieceType.Queen) return true else break
                 }
                 firstIter = false
                 nx += dx
@@ -326,8 +340,8 @@ class Board {
         possibleKnightPositions.forEach { elem ->
             val nx = elem.x
             val ny = if (nx > 5) elem.y - nx + 5 else elem.y
-            if (nx in cells.indices && ny in cells[nx].indices) {
-                if (cells[nx][ny] != null && cells[nx][ny]?.color != color && cells[nx][ny]?.type == PieceType.Knight) return true
+            if (nx in tempCells.indices && ny in tempCells[nx].indices) {
+                if (tempCells[nx][ny] != null && tempCells[nx][ny]?.color != color && tempCells[nx][ny]?.type == PieceType.Knight) return true
             }
         }
 

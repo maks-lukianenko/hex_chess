@@ -1,5 +1,6 @@
 package com.example.hexchess.frontend.navigation
 
+import android.transition.Scene
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -30,9 +31,9 @@ sealed class Screen(val route: String) {
 }
 
 val screens = listOf(
-    Screen.MatchHistory,
-    Screen.OnlineGame,
     Screen.EnterMenu,
+    Screen.OnlineGame,
+    Screen.MatchHistory,
     Screen.LoginMenu,
     Screen.RegisterMenu,
     Screen.MainMenu,

@@ -86,6 +86,7 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
     if (isLoading) {
         LoadingScreen(onCancel = { onCancel() })
     } else {
+        viewModel.boardUpdate(gameManager.board.cells)
         MainGameScreen(navController, gameManager)
     }
 }
@@ -95,18 +96,32 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
 fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
     var isConnected by remember { mutableStateOf(true) }
 
-    viewModel.boardUpdate(gameManager.board.cells)
-
-
     LaunchedEffect(key1 = gameManager.isPlayerTurn) {
         viewModel.boardUpdate(gameManager.board.cells)
     }
 
-
     LaunchedEffect(key1 = gameManager.isConnected) {
         isConnected = gameManager.isConnected
-
     }
+
+    if (viewModel.isPromotion) {
+        PromotionDialog(onPieceSelected = { piece ->
+            val (fx, fy) = viewModel.chosenPosition!!.getWithoutOffset()
+            val (tx, ty) = viewModel.promotionTarget!!.getWithoutOffset()
+            gameManager.sendPromotion(fx, fy, tx, ty, piece)
+            viewModel.isPromotion = false
+            viewModel.promotionTarget = null
+            viewModel.availableMoves.clear()
+            viewModel.chosenPosition = null
+        }, onDismissRequest = {
+            viewModel.isPromotion = false
+            viewModel.promotionTarget = null
+            viewModel.availableMoves.clear()
+            viewModel.chosenPosition = null
+        }, color = gameManager.color)
+    }
+
+
     if (!isConnected) {
         Dialog(onDismissRequest = { navController.navigateToMainMenu() }) {
             Card(
@@ -235,9 +250,24 @@ fun PieceView(
                 if (viewModel.chosenPosition != null && position in viewModel.availableMoves && gameManager.isPlayerTurn) {
                     val (fx, fy) = viewModel.chosenPosition!!.getWithoutOffset()
                     val (tx, ty) = position.getWithoutOffset()
-                    gameManager.sendMove(fx, fy, tx, ty)
-                    viewModel.availableMoves.clear()
-                    viewModel.chosenPosition = null
+
+                    Log.d(TAG, "FROM $fx, $fy TO $tx, $ty")
+
+                    if (gameManager.board.cells[fx][fy]!!.type == PieceType.Pawn) {
+                        if ((gameManager.board.cells[fx][fy]!!.color == PieceColor.White && ty == gameManager.board.cells[tx].size - 1)
+                            || (gameManager.board.cells[fx][fy]!!.color == PieceColor.Black && ty == 0)) {
+                            viewModel.promotionTarget = position
+                            viewModel.isPromotion = true
+                        } else {
+                            gameManager.sendMove(fx, fy, tx, ty)
+                            viewModel.availableMoves.clear()
+                            viewModel.chosenPosition = null
+                        }
+                    } else {
+                        gameManager.sendMove(fx, fy, tx, ty)
+                        viewModel.availableMoves.clear()
+                        viewModel.chosenPosition = null
+                    }
                 } else {
                     Log.d(TAG, "Chosen position is NULL")
                 }
@@ -256,8 +286,30 @@ fun PieceView(
                     }
                     .size(sizeOfItem)
                     .clickable {
-                        viewModel.chosenPosition = position
-                        viewModel.updateAvailableMoves(gameManager.getAvailableMoves(position))
+                        val playerColor = if (gameManager.color == "white") PieceColor.White else PieceColor.Black
+                        if (piece.color == playerColor && gameManager.isPlayerTurn) {
+                            viewModel.chosenPosition = position
+                            viewModel.updateAvailableMoves(gameManager.getAvailableMoves(position))
+                        } else {
+                            if (position in viewModel.availableMoves) {
+                                val (fx, fy) = viewModel.chosenPosition!!.getWithoutOffset()
+                                val (tx, ty) = position.getWithoutOffset()
+                                if (gameManager.board.cells[fx][fy]!!.type == PieceType.Pawn) {
+                                    if ((gameManager.board.cells[fx][fy]!!.color == PieceColor.White && ty == gameManager.board.cells[tx].size - 1)
+                                        || (gameManager.board.cells[fx][fy]!!.color == PieceColor.Black && ty == 0)) {
+                                        viewModel.promotionTarget = position
+                                        viewModel.isPromotion = true
+                                    } else {
+                                        gameManager.sendMove(fx, fy, tx, ty)
+                                        viewModel.availableMoves.clear()
+                                    }
+                                } else {
+                                    gameManager.sendMove(fx, fy, tx, ty)
+                                    viewModel.availableMoves.clear()
+                                }
+                                viewModel.chosenPosition = null
+                            }
+                        }
                     }
             )
         } else if (position in viewModel.availableMoves) {
@@ -305,4 +357,9 @@ fun BoardColumn (
             PieceView(colors[(i + startColor) % 3], columnCells[y], Position(x, y), gameManager)
         }
     }
+}
+
+@Composable
+fun PromotionPanel() {
+
 }
