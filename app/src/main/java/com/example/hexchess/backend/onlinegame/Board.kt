@@ -8,7 +8,6 @@ class Board {
     lateinit var cells: MutableList<MutableList<Piece?>>
     var tempCells: MutableList<MutableList<Piece?>>
     lateinit var kingPosition: Position
-    var isCheckMate = false
 
     init {
         initializeHexBoard()
@@ -85,10 +84,11 @@ class Board {
         kingPosition = if (color=="white") Position(6, 0) else Position(6, 9)
     }
 
-    fun checkForCheckMate(color: PieceColor) {
-        val (x, y) = kingPosition
+    fun checkForCheckMate() : Boolean {
+        val (x, y) = kingPosition.getWithoutOffset()
+        val color = cells[x][y]!!.color
         val kingMoves = getAvailableMoves(kingPosition)
-        isCheckMate = isBlockedField(kingPosition, cells[x][y]!!.color) && kingMoves.isEmpty() && canBlock(color)
+        return isBlockedField(kingPosition, color) && kingMoves.isEmpty() && canBlock(color)
 
     }
 
@@ -125,6 +125,7 @@ class Board {
         if (piece.type != PieceType.King) {
             val result = mutableListOf<Position>()
             for (elem in availableMoves) {
+                tempCells = cells.toMutableList()
                 if (isSecureMove(position, elem, piece.color)) result.add(elem)
             }
 //            availableMoves.filter { elem -> isSecureMove(position, elem, piece.color) }

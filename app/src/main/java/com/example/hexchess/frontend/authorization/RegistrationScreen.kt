@@ -1,5 +1,6 @@
 package com.example.hexchess.frontend.authorization
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -54,8 +55,8 @@ private val viewModel = AuthorizationViewModel()
 @Composable
 fun RegistrationScreen(navController: NavHostController = rememberNavController()) {
     var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
     
@@ -94,29 +95,6 @@ fun RegistrationScreen(navController: NavHostController = rememberNavController(
                     ) {
                         if (username.isEmpty()) {
                             Text("Username", color = DeepBlueGreen.copy(alpha = 0.5f))
-                        }
-                        innerTextField()
-                    }
-                }
-            )
-
-
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            BasicTextField(
-                value = email,
-                onValueChange = { email = it },
-                textStyle = TextStyle(fontSize = 18.sp),
-                decorationBox = { innerTextField ->
-                    Box(
-                        Modifier
-                            .background(Color.White, shape = MaterialTheme.shapes.small)
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .fillMaxWidth()
-                    ) {
-                        if (email.isEmpty()) {
-                            Text("Email", color = DeepBlueGreen.copy(alpha = 0.5f))
                         }
                         innerTextField()
                     }
@@ -162,12 +140,47 @@ fun RegistrationScreen(navController: NavHostController = rememberNavController(
                 ),
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            BasicTextField(
+                modifier = Modifier.background(Color.White),
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                textStyle = TextStyle(fontSize = 18.sp),
+                decorationBox = { innerTextField ->
+                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                        Box(
+                            Modifier
+                                .background(Color.White, shape = MaterialTheme.shapes.small)
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                .weight(1f)
+                        ) {
+                            if (confirmPassword.isEmpty()) {
+                                Text("Confirm password", color = DeepBlueGreen.copy(alpha = 0.5f))
+                            }
+                            innerTextField()
+                        }
+                    }
+                },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrectEnabled = false,
+                    keyboardType = KeyboardType.Password
+                ),
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
+
 
             Button(
                 onClick = {
-                    viewModel.onRegisterClicked(username, email, password, context)
-                    navController.navigateToMainMenu()
+                    if (password != confirmPassword) {
+                        Toast.makeText(context, "Password did not match", Toast.LENGTH_SHORT).show()
+                    } else {
+                        viewModel.onRegisterClicked(username, password, context)
+                        navController.navigateToMainMenu()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

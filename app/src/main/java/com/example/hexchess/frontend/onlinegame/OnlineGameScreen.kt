@@ -64,7 +64,7 @@ private const val TAG = "Online game screen"
 
 private val whiteSideColor = arrayListOf(Color.DarkGray, Color.White, Color.LightGray)
 private val blackSideColor = arrayListOf(Color.White, Color.DarkGray, Color.LightGray)
-private val SIZE = 45
+private val SIZE = 40
 
 
 @Composable
@@ -168,8 +168,8 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
         val radius = SIZE / 2
         val verticalPadding = radius * Math.sqrt(3.0) / 2
         val horizontalPadding = 3 * SIZE / 4
-        val centerX = configuration.screenWidthDp.dp / 2 - (horizontalPadding / 2).dp
-        val startTop = 50.dp
+        val centerX = configuration.screenWidthDp.dp / 2 - (horizontalPadding / 2).dp - (radius / 2).dp
+        val startTop = 80.dp
         val cells = remember {
             viewModel.cells
         }
@@ -177,6 +177,7 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
             IconButton(onClick = {
                 gameManager.disconnect()
                 viewModel.availableMoves.clear()
+                isConnected = true
                 navController.navigateToMainMenu()
             }) {
                 Icon(
@@ -184,6 +185,12 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
                     contentDescription = "Exit"
                 )
             }
+        }
+        Column (horizontalAlignment = Alignment.Start, modifier = Modifier.padding(top = startTop - 30.dp, start = 20.dp)) {
+            Text(text = "Opponent: " + gameManager.opponent, fontSize = 16.sp)
+        }
+        Column (horizontalAlignment = Alignment.Start, modifier = Modifier.padding(top = 450.dp, start = 20.dp)) {
+            gameManager.username?.let { Text(text = "You: $it", fontSize = 16.sp) }
         }
         BoardColumn(x = 5, startColor = 0, top = startTop, start = centerX,  columnCells = cells[5], gameManager)
         for (i in 1..5) {
@@ -205,6 +212,7 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
                 gameManager
             )
         }
+
     }
 }
 
@@ -255,7 +263,8 @@ fun PieceView(
 
                     if (gameManager.board.cells[fx][fy]!!.type == PieceType.Pawn) {
                         if ((gameManager.board.cells[fx][fy]!!.color == PieceColor.White && ty == gameManager.board.cells[tx].size - 1)
-                            || (gameManager.board.cells[fx][fy]!!.color == PieceColor.Black && ty == 0)) {
+                            || (gameManager.board.cells[fx][fy]!!.color == PieceColor.Black && ty == 0)
+                        ) {
                             viewModel.promotionTarget = position
                             viewModel.isPromotion = true
                         } else {
@@ -286,7 +295,8 @@ fun PieceView(
                     }
                     .size(sizeOfItem)
                     .clickable {
-                        val playerColor = if (gameManager.color == "white") PieceColor.White else PieceColor.Black
+                        val playerColor =
+                            if (gameManager.color == "white") PieceColor.White else PieceColor.Black
                         if (piece.color == playerColor && gameManager.isPlayerTurn) {
                             viewModel.chosenPosition = position
                             viewModel.updateAvailableMoves(gameManager.getAvailableMoves(position))
@@ -296,7 +306,8 @@ fun PieceView(
                                 val (tx, ty) = position.getWithoutOffset()
                                 if (gameManager.board.cells[fx][fy]!!.type == PieceType.Pawn) {
                                     if ((gameManager.board.cells[fx][fy]!!.color == PieceColor.White && ty == gameManager.board.cells[tx].size - 1)
-                                        || (gameManager.board.cells[fx][fy]!!.color == PieceColor.Black && ty == 0)) {
+                                        || (gameManager.board.cells[fx][fy]!!.color == PieceColor.Black && ty == 0)
+                                    ) {
                                         viewModel.promotionTarget = position
                                         viewModel.isPromotion = true
                                     } else {

@@ -19,7 +19,6 @@ class OnlineGameViewModel() : ViewModel() {
     var chosenPosition: Position? = null
     var promotionTarget: Position? = null
     var isPromotion by mutableStateOf(false)
-    var isEnumeration by mutableStateOf(false)
 
 
     fun boardUpdate(boardState : MutableList<MutableList<Piece?>>) {

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.hexchess.backend.onlinegame.Board
 import com.example.hexchess.backend.onlinegame.Piece
+import com.example.hexchess.backend.onlinegame.PieceColor
 import com.example.hexchess.backend.onlinegame.PieceType
 import com.example.hexchess.backend.onlinegame.Position
 import  okhttp3.OkHttpClient
@@ -23,13 +24,14 @@ class GameManager {
     var isConnected by mutableStateOf(true)
     var token: String? = ""
     var username: String? = ""
+    var opponent = ""
     val board = Board()
     var color = "white"
     var isPlayerTurn by mutableStateOf(false)
 
     fun connectToGame() {
         board.resetBoard()
-        val request = Request.Builder().url("ws://192.168.56.1:8000/ws/games/match/")
+        val request = Request.Builder().url("ws://34.159.110.3:8000/ws/games/match/")
             .addHeader("Authorization", "Bearer $token")
             .build()
         webSocket = client.newWebSocket(request, ChessWebSocketListener())
@@ -59,6 +61,13 @@ class GameManager {
             put("from", coordsToChessNotation(fx, fy))
             put("to", coordsToChessNotation(tx, ty))
             put("piece", piece)
+        }
+        webSocket?.send(moveJson.toString())
+    }
+
+    fun sendCheckMate() {
+        val moveJson = JSONObject().apply {
+            put("type", "checkmate")
         }
         webSocket?.send(moveJson.toString())
     }
@@ -96,6 +105,7 @@ class GameManager {
                 "game_start" -> {
                     isWaiting = false
                     color = data.getString("color")
+                    opponent = data.getString("opponent")
                     board.setKingPosition(data.getString("color"))
                     isPlayerTurn = color == "white"
                     Log.d(TAG, "Opponent found")
@@ -103,6 +113,7 @@ class GameManager {
                 }
                 "turn_update" -> {
                     isPlayerTurn = data.getString("current_turn") == color
+                    if (isPlayerTurn && board.checkForCheckMate()) Log.d(TAG, "CHECKMATE")
                     Log.d(TAG, "TURN: ${data.getString("current_turn")}")
                 }
                 "opponent_disconnected" -> {
@@ -133,12 +144,14 @@ class GameManager {
     private fun updateBoard(from: String, to: String, piecePromotion: String = "") {
         val (fx, fy) = chessNotationToCoords(from)
         val (tx, ty) = chessNotationToCoords(to)
+        val pieceColor = board.cells[fx][fy]!!.color
+        val playerColor = if (color == "white") PieceColor.White else PieceColor.Black
 
         // Move piece on the board
         if (piecePromotion == "") {
             board.cells[fx][fy]!!.isFirstTurn = false
             board.cells[tx][ty] = board.cells[fx][fy]
-            if (board.cells[tx][ty]!!.type == PieceType.King) board.kingPosition = Position(tx, ty)
+            if (board.cells[tx][ty]!!.type == PieceType.King && pieceColor == playerColor) board.kingPosition = Position(tx, ty)
             board.cells[fx][fy] = null
         } else {
             val pieceType: PieceType = when (piecePromotion) {
@@ -148,7 +161,6 @@ class GameManager {
                 "knight" -> PieceType.Knight
                 else -> {PieceType.Pawn}
             }
-            val pieceColor = board.cells[fx][fy]!!.color
             board.cells[tx][ty] = Piece(pieceColor, pieceType, false)
             board.cells[fx][fy] = null
         }

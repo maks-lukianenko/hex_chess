@@ -35,7 +35,7 @@ class AuthorizationViewModel : ViewModel() {
         val userNameManager = UserNameManager(context)
 
         val request = Request.Builder()
-            .url("http://192.168.56.1:8000/players/login/")
+            .url("http://34.159.110.3:8000/players/login/")
             .post(requestBody)
             .build()
 
@@ -71,14 +71,14 @@ class AuthorizationViewModel : ViewModel() {
         })
     }
 
-    fun onRegisterClicked(username: String, email: String, password: String, context: Context) {
-        val registerRequest = RegisterRequest(username, email, password)
+    fun onRegisterClicked(username: String, password: String, context: Context) {
+        val registerRequest = RegisterRequest(username, password)
         val requestBody = gson.toJson(registerRequest).toRequestBody(JSON)
         val tokenManager = TokenManager(context)
         val userNameManager = UserNameManager(context)
 
         val request = Request.Builder()
-            .url("http://169.254.101.110:8000/players/register/")
+            .url("http://34.159.110.3:8000/players/register/")
             .post(requestBody)
             .build()
 
