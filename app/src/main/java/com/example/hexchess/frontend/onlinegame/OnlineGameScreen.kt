@@ -1,6 +1,7 @@
 package com.example.hexchess.frontend.onlinegame
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -57,6 +58,7 @@ import com.example.hexchess.backend.onlinegame.PieceType
 import com.example.hexchess.backend.onlinegame.Position
 import com.example.hexchess.frontend.loading.LoadingScreen
 import com.example.hexchess.frontend.navigation.navigateToMainMenu
+import com.example.hexchess.ui.theme.LightBlue
 import com.example.hexchess.ui.theme.LightCoral
 
 val viewModel: OnlineGameViewModel = OnlineGameViewModel()
@@ -72,6 +74,8 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
     // State to track loading status
     var isLoading by remember { mutableStateOf(true) }
 
+
+
     // Listen to game manager messages to handle loading state
     LaunchedEffect(key1=gameManager.isWaiting) {
         isLoading = gameManager.isWaiting
@@ -82,6 +86,9 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
         navController.navigateToMainMenu()
     }
 
+    BackHandler {
+        onCancel()
+    }
 
     if (isLoading) {
         LoadingScreen(onCancel = { onCancel() })
@@ -96,6 +103,11 @@ fun OnlineGameScreen(navController: NavHostController = rememberNavController(),
 fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
     var isConnected by remember { mutableStateOf(true) }
 
+    BackHandler {
+        gameManager.disconnect()
+        navController.navigateToMainMenu()
+    }
+
     LaunchedEffect(key1 = gameManager.isPlayerTurn) {
         viewModel.boardUpdate(gameManager.board.cells)
     }
@@ -103,6 +115,15 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
     LaunchedEffect(key1 = gameManager.isConnected) {
         isConnected = gameManager.isConnected
     }
+
+    GameResultDialog(
+        showDialog = gameManager.isEndedGame,
+        isWin = gameManager.isWin,
+        onDismiss = {
+            gameManager.isEndedGame = false
+            navController.navigateToMainMenu()
+        }
+    )
 
     if (viewModel.isPromotion) {
         PromotionDialog(onPieceSelected = { piece ->
@@ -122,7 +143,7 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
     }
 
 
-    if (!isConnected) {
+    if (!isConnected && !gameManager.isEndedGame) {
         Dialog(onDismissRequest = { navController.navigateToMainMenu() }) {
             Card(
                 modifier = Modifier
@@ -161,7 +182,7 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
 
     Box(modifier = Modifier
         .fillMaxSize()
-        .background(Color(0xfff0e2b9)),
+        .background(Color(0xFFD6E0F5)),
 
     ) {
         val configuration = LocalConfiguration.current
@@ -186,12 +207,24 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
                 )
             }
         }
-        Column (horizontalAlignment = Alignment.Start, modifier = Modifier.padding(top = startTop - 30.dp, start = 20.dp)) {
-            Text(text = "Opponent: " + gameManager.opponent, fontSize = 16.sp)
+
+        GameResultDialog(
+            showDialog = gameManager.isEndedGame,
+            isWin = gameManager.isWin,
+            onDismiss = {
+                gameManager.isEndedGame = false
+                navController.navigateToMainMenu()
+            }
+        )
+
+        if (gameManager.color == "white") {
+            PlayerStatus(nickname = gameManager.opponent, rating = gameManager.opponentRating, isPlayerTurn = !gameManager.isPlayerTurn, playerColor = PieceColor.Black, capturedPieces = gameManager.whiteCapturedPieces, modifier = Modifier.padding(top = startTop - 30.dp, start = 20.dp))
+            gameManager.username?.let { PlayerStatus(nickname = it, rating = gameManager.currentRating, isPlayerTurn = gameManager.isPlayerTurn, playerColor = PieceColor.White, capturedPieces = gameManager.blackCapturedPieces, modifier = Modifier.padding(top = 450.dp, start = 20.dp)) }
+        } else {
+            PlayerStatus(nickname = gameManager.opponent, rating = gameManager.opponentRating, isPlayerTurn = !gameManager.isPlayerTurn, playerColor = PieceColor.White, capturedPieces = gameManager.blackCapturedPieces, modifier = Modifier.padding(top = startTop - 30.dp, start = 20.dp))
+            gameManager.username?.let { PlayerStatus(nickname = it, rating = gameManager.currentRating, isPlayerTurn = gameManager.isPlayerTurn, playerColor = PieceColor.Black, capturedPieces = gameManager.whiteCapturedPieces, modifier = Modifier.padding(top = 450.dp, start = 20.dp)) }
         }
-        Column (horizontalAlignment = Alignment.Start, modifier = Modifier.padding(top = 450.dp, start = 20.dp)) {
-            gameManager.username?.let { Text(text = "You: $it", fontSize = 16.sp) }
-        }
+
         BoardColumn(x = 5, startColor = 0, top = startTop, start = centerX,  columnCells = cells[5], gameManager)
         for (i in 1..5) {
             val columnOffset = if (gameManager.color=="black") -i else i
@@ -241,12 +274,15 @@ fun PieceView(
         PieceType.Knight -> if (piece.color == PieceColor.White) R.drawable.knight_white else R.drawable.knight_dark
         null -> R.drawable.empty
     }
+    var cellBackground = color
+    if (piece?.type != null && position in viewModel.availableMoves) cellBackground = LightCoral
+    else if (position in gameManager.currentMove) cellBackground = LightBlue
 
     Box (
         modifier = Modifier
             .border(1.dp, Color.Black, RoundedPolygonShape(polygon = hexagon))
             .background(
-                if (piece?.type != null && position in viewModel.availableMoves) LightCoral else color,
+                cellBackground,
                 RoundedPolygonShape(polygon = hexagon)
             )
             .clip(RoundedPolygonShape(polygon = hexagon))
@@ -318,7 +354,7 @@ fun PieceView(
                                     gameManager.sendMove(fx, fy, tx, ty)
                                     viewModel.availableMoves.clear()
                                 }
-                                viewModel.chosenPosition = null
+                                if (!viewModel.isPromotion) viewModel.chosenPosition = null
                             }
                         }
                     }
@@ -368,9 +404,4 @@ fun BoardColumn (
             PieceView(colors[(i + startColor) % 3], columnCells[y], Position(x, y), gameManager)
         }
     }
-}
-
-@Composable
-fun PromotionPanel() {
-
 }

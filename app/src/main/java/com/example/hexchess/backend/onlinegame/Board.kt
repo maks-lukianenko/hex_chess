@@ -96,8 +96,10 @@ class Board {
         cells.forEachIndexed { x, column ->
             column.forEachIndexed { y, piece ->
                 if (piece != null && cells[x][y]?.color == color) {
-                    val availablePieceMoves = getAvailableMoves(Position(x, y))
-                    if (availablePieceMoves.isNotEmpty()) return true
+                    if (piece.type != PieceType.King) {
+                        val availablePieceMoves = getAvailableMoves(Position(x, y))
+                        if (availablePieceMoves.isNotEmpty()) return true
+                    }
                 }
             }
         }
@@ -130,6 +132,8 @@ class Board {
             }
 //            availableMoves.filter { elem -> isSecureMove(position, elem, piece.color) }
             return result
+        } else {
+            tempCells[x][y] = piece
         }
 
         return availableMoves
@@ -137,6 +141,8 @@ class Board {
 
     private fun getKingMoves(position: Position, color: PieceColor): Collection<Position> {
         val (x, y) = position
+        val (wx, wy) = position.getWithoutOffset()
+        tempCells[wx][wy] = null
         return listOf(
             Position(x, y + 1, false),
             Position(x + 1, y + 1, false),

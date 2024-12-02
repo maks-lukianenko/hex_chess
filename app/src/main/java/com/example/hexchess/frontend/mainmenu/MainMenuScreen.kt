@@ -2,6 +2,7 @@ package com.example.hexchess.frontend.mainmenu
 
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import com.example.hexchess.backend.authorization.TokenManager
 import com.example.hexchess.backend.authorization.UserNameManager
 import com.example.hexchess.backend.gamemanager.GameManager
 import com.example.hexchess.frontend.navigation.navigateToEnterMenu
+import com.example.hexchess.frontend.navigation.navigateToMatchHistory
 import com.example.hexchess.frontend.navigation.navigateToOnlineGame
 
 private const val TAG = "Main Menu Screen"
@@ -33,12 +35,20 @@ fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
     val tokenFlow = remember { tokenManager.getToken() }
     val token by tokenFlow.collectAsState(initial = null)
 
+
     val userNameManager = remember { UserNameManager(context) }
     val usernameFlow = remember { userNameManager.getUsername() }
     val username by usernameFlow.collectAsState(initial = null)
 
+    BackHandler {
+        navController.navigateToEnterMenu()
+    }
+
     LaunchedEffect(key1 = token, key2 = username) {
-        if (token != null) gameManager.token = token
+        if (token != null) {
+            gameManager.token = token
+
+        }
         if (username != null) gameManager.username = username
     }
 
@@ -77,7 +87,7 @@ fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
             }
             Button(
                 onClick = {
-                    // TODO
+                    navController.navigateToMatchHistory()
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.6f)

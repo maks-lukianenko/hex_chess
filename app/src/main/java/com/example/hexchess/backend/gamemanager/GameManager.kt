@@ -1,6 +1,7 @@
 package com.example.hexchess.backend.gamemanager
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.hexchess.backend.onlinegame.Board
@@ -22,20 +23,26 @@ class GameManager {
     private var webSocket: WebSocket? = null
     var isWaiting by mutableStateOf(true)
     var isConnected by mutableStateOf(true)
+    var isWin by mutableStateOf(false)
+    var isEndedGame by mutableStateOf(false)
     var token: String? = ""
     var username: String? = ""
     var opponent = ""
     val board = Board()
     var color = "white"
     var isPlayerTurn by mutableStateOf(false)
+    val whiteCapturedPieces = mutableStateListOf<Int>()
+    val blackCapturedPieces = mutableStateListOf<Int>()
+    val currentMove = mutableStateListOf<Position>()
+    var currentRating = ""
+    var opponentRating = ""
 
     fun connectToGame() {
-        board.resetBoard()
         val request = Request.Builder().url("ws://34.159.110.3:8000/ws/games/match/")
             .addHeader("Authorization", "Bearer $token")
             .build()
+        resetGame()
         webSocket = client.newWebSocket(request, ChessWebSocketListener())
-        isConnected = true
     }
 
     fun disconnect() {
@@ -90,13 +97,13 @@ class GameManager {
                     val from = data.getString("from")
                     val to = data.getString("to")
                     Log.d(TAG, "Moved piece from $from to $to")
-                    updateBoard(from, to)
+                    updateState(from, to)
                 }
                 "promotion_made" -> {
                     val from = data.getString("from")
                     val to = data.getString("to")
                     val piece = data.getString("piece")
-                    updateBoard(from, to, piece)
+                    updateState(from, to, piece)
                 }
                 "game_waiting" -> {
                     isWaiting = true
@@ -108,17 +115,28 @@ class GameManager {
                     opponent = data.getString("opponent")
                     board.setKingPosition(data.getString("color"))
                     isPlayerTurn = color == "white"
+                    currentRating = data.getString("current_score")
+                    opponentRating = data.getString("opponent_score")
+
                     Log.d(TAG, "Opponent found")
                     Log.d(TAG, "Your color is ${data.getString("color")}")
                 }
                 "turn_update" -> {
                     isPlayerTurn = data.getString("current_turn") == color
-                    if (isPlayerTurn && board.checkForCheckMate()) Log.d(TAG, "CHECKMATE")
+                    if (isPlayerTurn && board.checkForCheckMate()) sendCheckMate()
                     Log.d(TAG, "TURN: ${data.getString("current_turn")}")
                 }
                 "opponent_disconnected" -> {
                     isConnected=false
                     Log.d(TAG, "Opponent disconnected")
+                }
+                "win" -> {
+                    isEndedGame = true
+                    isWin = true
+                }
+                "lose" -> {
+                    isEndedGame = true
+                    isWin = false
                 }
             }
             Log.d(TAG, "ON MESSAGE")
@@ -141,11 +159,37 @@ class GameManager {
     }
 
 
-    private fun updateBoard(from: String, to: String, piecePromotion: String = "") {
+    private fun updateState(from: String, to: String, piecePromotion: String = "") {
+        currentMove.clear()
         val (fx, fy) = chessNotationToCoords(from)
         val (tx, ty) = chessNotationToCoords(to)
         val pieceColor = board.cells[fx][fy]!!.color
         val playerColor = if (color == "white") PieceColor.White else PieceColor.Black
+
+        currentMove.add(Position(fx, fy))
+        currentMove.add(Position(tx, ty))
+
+        if (board.cells[tx][ty] != null) {
+            if (board.cells[tx][ty]!!.color == PieceColor.White) {
+                when (board.cells[tx][ty]!!.type) {
+                    PieceType.Pawn -> whiteCapturedPieces.add(1)
+                    PieceType.King -> whiteCapturedPieces.add(12)
+                    PieceType.Queen -> whiteCapturedPieces.add(9)
+                    PieceType.Rook -> whiteCapturedPieces.add(5)
+                    PieceType.Bishop -> whiteCapturedPieces.add(2)
+                    PieceType.Knight -> whiteCapturedPieces.add(3)
+                }
+            } else {
+                when (board.cells[tx][ty]!!.type) {
+                    PieceType.Pawn -> blackCapturedPieces.add(1)
+                    PieceType.King -> blackCapturedPieces.add(12)
+                    PieceType.Queen -> blackCapturedPieces.add(9)
+                    PieceType.Rook -> blackCapturedPieces.add(5)
+                    PieceType.Bishop -> blackCapturedPieces.add(2)
+                    PieceType.Knight -> blackCapturedPieces.add(3)
+                }
+            }
+        }
 
         // Move piece on the board
         if (piecePromotion == "") {
@@ -185,5 +229,16 @@ class GameManager {
 
     fun getAvailableMoves(position: Position): Collection<Position?> {
         return board.getAvailableMoves(position)
+    }
+
+    private fun resetGame() {
+        board.resetBoard()
+        currentMove.clear()
+        whiteCapturedPieces.clear()
+        blackCapturedPieces.clear()
+        currentRating = ""
+        isWin = false
+        isEndedGame = false
+        isConnected = true
     }
 }

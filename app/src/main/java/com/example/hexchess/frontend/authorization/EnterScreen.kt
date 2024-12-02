@@ -1,5 +1,6 @@
 package com.example.hexchess.frontend.authorization
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.hexchess.frontend.navigation.navigateToEnterMenu
 import com.example.hexchess.frontend.navigation.navigateToLoginMenu
 import com.example.hexchess.frontend.navigation.navigateToRegistrationMenu
 import com.example.hexchess.ui.theme.DeepBlueGreen
@@ -27,6 +29,8 @@ private const val TAG = "Login Screen"
 
 @Composable
 fun EnterScreen(navController: NavHostController = rememberNavController()) {
+    BackHandler {  }
+
     Box(
         modifier = Modifier
             .fillMaxSize()

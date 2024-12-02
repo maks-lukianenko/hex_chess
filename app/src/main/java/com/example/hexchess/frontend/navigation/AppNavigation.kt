@@ -52,11 +52,15 @@ fun HandleScreen(screen: Screen, navController: NavHostController, gameManager: 
 }
 
 fun NavController.navigateToMainMenu() {
-    navigate("MainMenuScreen")
+    navigate("MainMenuScreen") {
+        popUpTo(0) { inclusive = true }
+    }
 }
 
 fun NavController.navigateToOnlineGame() {
-    navigate("OnlineGameScreen")
+    navigate("OnlineGameScreen") {
+        popUpTo(0) { inclusive = true }
+    }
 }
 
 fun NavController.navigateToLoginMenu() {
@@ -68,9 +72,13 @@ fun NavController.navigateToRegistrationMenu() {
 }
 
 fun NavController.navigateToEnterMenu() {
-    navigate("EnterScreen")
+    navigate("EnterScreen") {
+        popUpTo(0) { inclusive = true }
+    }
 }
 
 fun NavController.navigateToMatchHistory() {
-    navigate("HistoryScreen")
+    navigate("HistoryScreen") {
+        popUpTo(0) { inclusive = true }
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.hexchess.frontend.authorization
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.hexchess.frontend.navigation.navigateToEnterMenu
 import com.example.hexchess.frontend.navigation.navigateToMainMenu
 import com.example.hexchess.ui.theme.DeepBlueGreen
 import com.example.hexchess.ui.theme.LightTurquoise
@@ -59,7 +61,10 @@ fun RegistrationScreen(navController: NavHostController = rememberNavController(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    
+
+    BackHandler {
+        navController.navigateToEnterMenu()
+    }
 
     Box(
         modifier = Modifier
