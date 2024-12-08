@@ -1,0 +1,103 @@
+@startuml
+class Board {
+    - MutableList<MutableList<Piece?>> cells
+    - MutableList<MutableList<Piece?>> tempCells
+    - Position kingPosition
+    --
+    + resetBoard(): void
+    - initializeHexBoard(): void
+    - setupHexBoard(): void
+    - isValidMove(position: Position, color: PieceColor): Boolean
+    - isPawnCapture(position: Position, color: PieceColor): Boolean
+    + setKingPosition(color: String): void
+    + checkForCheckMate(): Boolean
+    - canBlock(color: PieceColor): Boolean
+    + getAvailableMoves(position: Position): List<Position>
+    - getKingMoves(position: Position, color: PieceColor): Collection<Position>
+    - getKnightMoves(position: Position, color: PieceColor): Collection<Position>
+    - getRookMoves(position: Position, color: PieceColor): Collection<Position>
+    - getBishopMoves(position: Position, color: PieceColor): Collection<Position>
+    - getPawnMoves(position: Position, color: PieceColor): Collection<Position>
+    - isSecureMove(from: Position, to: Position, color: PieceColor): Boolean
+    - isPawnField(position: Position, color: PieceColor): Boolean
+    - isBlockedField(position: Position, color: PieceColor, includeKnight: Boolean): Boolean
+}
+
+class GameManager {
+    - OkHttpClient client
+    - WebSocket? webSocket
+    - Boolean isWaiting
+    - Boolean isConnected
+    - Boolean isWin
+    - Boolean isEndedGame
+    - String? token
+    - String? username
+    - String opponent
+    - Board board
+    - String color
+    - Boolean isPlayerTurn
+    - MutableList<Int> whiteCapturedPieces
+    - MutableList<Int> blackCapturedPieces
+    - MutableList<Position> currentMove
+    - String currentRating
+    - String opponentRating
+    --
+    + connectToGame(): void
+    + disconnect(): void
+    + sendMove(fx: Int, fy: Int, tx: Int, ty: Int): void
+    + sendPromotion(fx: Int, fy: Int, tx: Int, ty: Int, piece: String): void
+    + sendCheckMate(): void
+    - updateState(from: String, to: String, piecePromotion: String): void
+    - chessNotationToCoords(pos: String): Pair<Int, Int>
+    - coordsToChessNotation(x: Int, y: Int): String
+    + getAvailableMoves(position: Position): Collection<Position?>
+    - resetGame(): void
+}
+
+class ChessWebSocketListener {
+    + onOpen(webSocket: WebSocket, response: okhttp3.Response): void
+    + onMessage(webSocket: WebSocket, text: String): void
+    + onMessage(webSocket: WebSocket, bytes: ByteString): void
+    + onClosing(webSocket: WebSocket, code: Int, reason: String): void
+    + onFailure(webSocket: WebSocket, t: Throwable, response: okhttp3.Response?): void
+}
+
+GameManager *-- Board
+GameManager *-- Position
+GameManager o-- ChessWebSocketListener
+
+class Piece {
+    + PieceColor color
+    + PieceType type
+    + Boolean isFirstTurn
+}
+
+class Position {
+    + Int x
+    + Int y
+    - Boolean withOffset
+    --
+    + getWithoutOffset(): Pair<Int, Int>
+    + component1(): Int
+    + component2(): Int
+}
+
+enum PieceColor {
+    White
+    Black
+}
+
+enum PieceType {
+    Pawn
+    Rook
+    Knight
+    Bishop
+    Queen
+    King
+}
+
+Board "1" *-- "0..*" Piece
+Board "1" o-- "1" Position
+GameManager "1" *-- "1" Board
+GameManager "1" *-- "0..*" Position
+@enduml

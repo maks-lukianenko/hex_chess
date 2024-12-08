@@ -7,7 +7,7 @@ import com.example.hexchess.frontend.navigation.dataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val  USERNAME_KEY = stringPreferencesKey("username")
+private val USERNAME_KEY = stringPreferencesKey("username")
 
 class UserNameManager(private val context: Context) {
 

@@ -92,7 +92,6 @@ class AuthorizationViewModel : ViewModel() {
                             userNameManager.saveUsername(username)
                         }
                         Log.d(TAG, "Register successful: ${tokenResponse.accessToken}")
-                        // Save tokens and proceed to next screen
                     } else {
                         Log.d(TAG, "Register failed: ${it.message}")
                     }

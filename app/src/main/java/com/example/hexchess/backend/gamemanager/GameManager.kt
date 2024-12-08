@@ -79,8 +79,6 @@ class GameManager {
         webSocket?.send(moveJson.toString())
     }
 
-
-    // WebSocket Listener to handle messages from the server
     private inner class ChessWebSocketListener : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: okhttp3.Response) {
@@ -191,7 +189,6 @@ class GameManager {
             }
         }
 
-        // Move piece on the board
         if (piecePromotion == "") {
             board.cells[fx][fy]!!.isFirstTurn = false
             board.cells[tx][ty] = board.cells[fx][fy]

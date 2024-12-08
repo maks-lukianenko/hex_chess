@@ -3,7 +3,6 @@ package com.example.hexchess.frontend.authorization
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,21 +12,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +44,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.hexchess.frontend.navigation.navigateToEnterMenu
 import com.example.hexchess.frontend.navigation.navigateToMainMenu
 import com.example.hexchess.ui.theme.DeepBlueGreen
-import com.example.hexchess.ui.theme.LightTurquoise
 
 private val viewModel = AuthorizationViewModel()
 
@@ -82,14 +75,14 @@ fun RegistrationScreen(navController: NavHostController = rememberNavController(
                 text = "Sign up",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = DeepBlueGreen
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             BasicTextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = { username = it.replace(" ", "") },
                 textStyle = TextStyle(fontSize = 18.sp),
                 decorationBox = { innerTextField ->
                     Box(
@@ -109,9 +102,9 @@ fun RegistrationScreen(navController: NavHostController = rememberNavController(
             Spacer(modifier = Modifier.height(8.dp))
 
             BasicTextField(
-                modifier = Modifier.background(Color.White),
+                modifier = Modifier.background(Color.White, shape = MaterialTheme.shapes.small),
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = it.replace(" ", "") },
                 textStyle = TextStyle(fontSize = 18.sp),
                 decorationBox = { innerTextField ->
                     val image = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
@@ -148,9 +141,9 @@ fun RegistrationScreen(navController: NavHostController = rememberNavController(
             Spacer(modifier = Modifier.height(8.dp))
 
             BasicTextField(
-                modifier = Modifier.background(Color.White),
+                modifier = Modifier.background(Color.White, shape = MaterialTheme.shapes.small),
                 value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                onValueChange = { confirmPassword = it.replace(" ", "") },
                 textStyle = TextStyle(fontSize = 18.sp),
                 decorationBox = { innerTextField ->
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {

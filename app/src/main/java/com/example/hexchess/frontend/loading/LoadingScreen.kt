@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hexchess.ui.theme.DarkBlueGreen
 import com.example.hexchess.ui.theme.GrayishTeal
-import com.example.hexchess.ui.theme.LightBlueTeal
 import com.example.hexchess.ui.theme.LightTeal
 
 @Composable
@@ -30,7 +30,7 @@ fun LoadingScreen(onCancel: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(LightBlueTeal),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -55,12 +55,12 @@ fun LoadingScreen(onCancel: () -> Unit) {
             Button(
                 onClick = onCancel,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = DarkBlueGreen, // Button background color
-                    contentColor = Color.White // Button text color
+                    containerColor = DarkBlueGreen,
+                    contentColor = Color.White
                 ),
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .fillMaxWidth(0.6f) // Set button width to 60% of the screen width
+                    .fillMaxWidth(0.6f)
             ) {
                 Text("Cancel", fontSize = 16.sp)
             }

@@ -35,7 +35,6 @@ fun GameResultDialog(
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Title based on win/lose
                     Text(
                         text = if (isWin) "You Win!" else "You Lose!",
                         style = MaterialTheme.typography.headlineSmall,
@@ -43,7 +42,6 @@ fun GameResultDialog(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Message
                     Text(
                         text = if (isWin) "Congratulations on your victory!" else "Better luck next time!",
                         style = MaterialTheme.typography.bodyMedium
@@ -58,7 +56,6 @@ fun GameResultDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Actions
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         modifier = Modifier.fillMaxWidth()

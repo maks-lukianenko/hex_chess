@@ -70,7 +70,7 @@ fun LoginScreen(navController: NavHostController = rememberNavController()) {
 
             BasicTextField(
                 value = username,
-                onValueChange = { username = it },
+                onValueChange = { username = it.replace(" ", "") },
                 textStyle = TextStyle(fontSize = 18.sp),
                 decorationBox = { innerTextField ->
                     Box(
@@ -92,7 +92,7 @@ fun LoginScreen(navController: NavHostController = rememberNavController()) {
             BasicTextField(
                 modifier = Modifier.background(Color.White, shape = MaterialTheme.shapes.small),
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = it.replace(" ", "") },
                 textStyle = TextStyle(fontSize = 18.sp),
                 decorationBox = { innerTextField ->
                     val image = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
@@ -134,12 +134,10 @@ fun LoginScreen(navController: NavHostController = rememberNavController()) {
                         password,
                         context,
                         onLoginSuccess = {
-                            // Navigate to main menu on success
                             navController.navigateToMainMenu()
                             Log.d(TAG, "Login successful, navigating to main menu")
                         },
                         onLoginFailure = { errorMessage ->
-                            // Show an error message or handle failure UI
                             Log.d(TAG, "Login failed: $errorMessage")
                             Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                         }

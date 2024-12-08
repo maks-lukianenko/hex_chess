@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.example.hexchess.backend.onlinegame.Piece
 import com.example.hexchess.backend.onlinegame.Position
@@ -19,6 +20,7 @@ class OnlineGameViewModel() : ViewModel() {
     var chosenPosition: Position? = null
     var promotionTarget: Position? = null
     var isPromotion by mutableStateOf(false)
+    var cellSize = 0.dp
 
 
     fun boardUpdate(boardState : MutableList<MutableList<Piece?>>) {

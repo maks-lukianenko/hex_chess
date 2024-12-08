@@ -6,7 +6,7 @@ private val TAG = "BOARD class"
 
 class Board {
     lateinit var cells: MutableList<MutableList<Piece?>>
-    var tempCells: MutableList<MutableList<Piece?>>
+    private var tempCells: MutableList<MutableList<Piece?>>
     lateinit var kingPosition: Position
 
     init {
@@ -21,7 +21,7 @@ class Board {
         setupHexBoard()
     }
 
-    private fun initializeHexBoard() { // Init classic hex bord with 71 cells
+    private fun initializeHexBoard() {
         cells = mutableListOf()
         for (i in 6..11) {
             cells.add(MutableList(i) { null })
@@ -61,7 +61,6 @@ class Board {
         cells[5][8] = Piece(PieceColor.Black, PieceType.Bishop, true)
         cells[5][9] = Piece(PieceColor.Black, PieceType.Bishop, true)
         cells[5][10] = Piece(PieceColor.Black, PieceType.Bishop, true)
-
     }
 
     private fun isValidMove(position: Position, color: PieceColor) : Boolean {
@@ -130,7 +129,6 @@ class Board {
                 tempCells = cells.toMutableList()
                 if (isSecureMove(position, elem, piece.color)) result.add(elem)
             }
-//            availableMoves.filter { elem -> isSecureMove(position, elem, piece.color) }
             return result
         } else {
             tempCells[x][y] = piece
