@@ -1,8 +1,10 @@
+
+
+## Pobieranie Android Studio
+
 Aplikacja została zbudowana przy użyciu:
 
 - **Android Studio Koala** | 2024.1.1
-
-## Pobieranie Android Studio
 
 Aby pobrać i zainstalować Android Studio, skorzystaj z poniższego linku:\
 [Android Studio - Instrukcja pobierania i instalacji](https://developer.android.com/studio/install)
