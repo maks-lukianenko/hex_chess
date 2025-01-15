@@ -47,13 +47,6 @@ fun GameResultDialog(
                         style = MaterialTheme.typography.bodyMedium
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = if (isWin) "Congratulations on your victory!" else "Better luck next time!",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(

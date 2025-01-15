@@ -87,7 +87,7 @@ class Board {
         val (x, y) = kingPosition.getWithoutOffset()
         val color = cells[x][y]!!.color
         val kingMoves = getAvailableMoves(kingPosition)
-        return isBlockedField(kingPosition, color) && kingMoves.isEmpty() && canBlock(color)
+        return isBlockedField(kingPosition, color) && kingMoves.isEmpty() && !canBlock(color)
 
     }
 
@@ -102,7 +102,6 @@ class Board {
                 }
             }
         }
-
         return false
     }
 
@@ -256,7 +255,6 @@ class Board {
         } else {
             tempCells[fx][fy] = tempCells[tx][ty]
             tempCells[tx][ty] = tempPiece
-            Log.d(TAG, "IS NOT SECURE MOVE FROM $fx, $fy TO $tx, $ty")
             return false
         }
 

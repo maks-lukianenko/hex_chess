@@ -2,9 +2,12 @@ package com.example.hexchess.backend.gamemanager
 
 import com.google.gson.annotations.SerializedName
 
-data class Move (
-    val from: String,
-    val to: String,
+data class Move(
+    val move_number: Int,
+    val from_position: String,
+    val promotion_piece: String,
+    val to_position: String,
+    val created_at: String
 )
 
 data class Game(

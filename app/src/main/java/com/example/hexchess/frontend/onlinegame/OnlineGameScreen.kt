@@ -1,6 +1,5 @@
 package com.example.hexchess.frontend.onlinegame
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -181,13 +180,6 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
         .fillMaxSize()
         .background(Color(0xFFD6E0F5)),
     ) {
-        val configuration = LocalConfiguration.current
-        val SIZE = (configuration.screenWidthDp.dp / 10)
-        viewModel.cellSize = SIZE
-        val verticalPadding = (sqrt(3.0) / 4) * SIZE
-        val horizontalPadding = 3 * SIZE / 4
-        val centerX = configuration.screenWidthDp.dp / 2 - (horizontalPadding / 2)
-        val startTop = 80.dp
         val cells = remember {
             viewModel.cells
         }
@@ -214,12 +206,20 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
             }
         )
 
+        val startTop = 80.dp
+        val configuration = LocalConfiguration.current
+        val size = (configuration.screenWidthDp.dp / 10)
+        viewModel.cellSize = size
+        val verticalPadding = (sqrt(3.0) / 4) * size
+        val horizontalPadding = 3 * size / 4
+        val centerX = configuration.screenWidthDp.dp / 2 - (horizontalPadding / 2)
+
         if (gameManager.color == "white") {
-            PlayerStatus(nickname = gameManager.opponent, rating = gameManager.opponentRating, isPlayerTurn = !gameManager.isPlayerTurn, playerColor = PieceColor.Black, capturedPieces = gameManager.whiteCapturedPieces, modifier = Modifier.padding(top = startTop - SIZE, start = 20.dp))
-            gameManager.username?.let { PlayerStatus(nickname = it, rating = gameManager.currentRating, isPlayerTurn = gameManager.isPlayerTurn, playerColor = PieceColor.White, capturedPieces = gameManager.blackCapturedPieces, modifier = Modifier.padding(top = startTop + 9 * SIZE, start = 20.dp)) }
+            PlayerStatus(nickname = gameManager.opponent, rating = gameManager.opponentRating, isPlayerTurn = !gameManager.isPlayerTurn, playerColor = PieceColor.Black, capturedPieces = gameManager.whiteCapturedPieces, modifier = Modifier.padding(top = startTop - size, start = 20.dp))
+            gameManager.username?.let { PlayerStatus(nickname = it, rating = gameManager.currentRating, isPlayerTurn = gameManager.isPlayerTurn, playerColor = PieceColor.White, capturedPieces = gameManager.blackCapturedPieces, modifier = Modifier.padding(top = startTop + 9 * size, start = 20.dp)) }
         } else {
             PlayerStatus(nickname = gameManager.opponent, rating = gameManager.opponentRating, isPlayerTurn = !gameManager.isPlayerTurn, playerColor = PieceColor.White, capturedPieces = gameManager.blackCapturedPieces, modifier = Modifier.padding(top = startTop - 30.dp, start = 20.dp))
-            gameManager.username?.let { PlayerStatus(nickname = it, rating = gameManager.currentRating, isPlayerTurn = gameManager.isPlayerTurn, playerColor = PieceColor.Black, capturedPieces = gameManager.whiteCapturedPieces, modifier = Modifier.padding(top = startTop + 9 * SIZE, start = 20.dp)) }
+            gameManager.username?.let { PlayerStatus(nickname = it, rating = gameManager.currentRating, isPlayerTurn = gameManager.isPlayerTurn, playerColor = PieceColor.Black, capturedPieces = gameManager.whiteCapturedPieces, modifier = Modifier.padding(top = startTop + 9 * size, start = 20.dp)) }
         }
 
         BoardColumn(x = 5, startColor = 0, top = startTop, start = centerX,  columnCells = cells[5], gameManager)
@@ -242,7 +242,6 @@ fun MainGameScreen(navController: NavHostController, gameManager: GameManager) {
                 gameManager
             )
         }
-
     }
 }
 
@@ -253,14 +252,9 @@ fun PieceView(
     position: Position,
     gameManager: GameManager
 ) {
-
     val sizeOfItem = viewModel.cellSize
-    val hexagon = remember {
-        RoundedPolygon(6)
-    }
-    val clip = remember(hexagon) {
-        RoundedPolygonShape(polygon = hexagon)
-    }
+    val hexagon = remember { RoundedPolygon(6) }
+    val clip = remember(hexagon) { RoundedPolygonShape(polygon = hexagon) }
 
     val imageResId = when (piece?.type) {
         PieceType.Pawn -> if (piece.color == PieceColor.White) R.drawable.pawn_white else R.drawable.pawn_dark
@@ -271,9 +265,12 @@ fun PieceView(
         PieceType.Knight -> if (piece.color == PieceColor.White) R.drawable.knight_white else R.drawable.knight_dark
         null -> R.drawable.empty
     }
-    var cellBackground = color
-    if (piece?.type != null && position in viewModel.availableMoves) cellBackground = LightCoral
-    else if (position in gameManager.currentMove) cellBackground = LightBlue
+
+    val cellBackground = when {
+        piece?.type != null && position in viewModel.availableMoves -> LightCoral
+        position in gameManager.currentMove -> LightBlue
+        else -> color
+    }
 
     Box (
         modifier = Modifier
@@ -308,10 +305,8 @@ fun PieceView(
     ) {
         if (piece != null) {
             Image(
-                painter = painterResource(
-                    imageResId
-                ),
-                contentDescription = "Figure",
+                painter = painterResource(imageResId),
+                contentDescription = "Piece",
                 modifier = Modifier
                     .graphicsLayer {
                         this.shape = clip
@@ -323,25 +318,24 @@ fun PieceView(
                         if (piece.color == playerColor && gameManager.isPlayerTurn) {
                             viewModel.chosenPosition = position
                             viewModel.updateAvailableMoves(gameManager.getAvailableMoves(position))
-                        } else {
-                            if (position in viewModel.availableMoves) {
-                                val (fx, fy) = viewModel.chosenPosition!!.getWithoutOffset()
-                                val (tx, ty) = position.getWithoutOffset()
-                                if (gameManager.board.cells[fx][fy]!!.type == PieceType.Pawn) {
-                                    if ((gameManager.board.cells[fx][fy]!!.color == PieceColor.White && ty == gameManager.board.cells[tx].size - 1)
-                                        || (gameManager.board.cells[fx][fy]!!.color == PieceColor.Black && ty == 0)
-                                    ) {
-                                        viewModel.promotionTarget = position
-                                        viewModel.isPromotion = true
-                                    } else {
-                                        gameManager.sendMove(fx, fy, tx, ty)
-                                        viewModel.availableMoves.clear()
-                                    }
-                                } else {
-                                    gameManager.sendMove(fx, fy, tx, ty)
-                                    viewModel.availableMoves.clear()
-                                }
-                                if (!viewModel.isPromotion) viewModel.chosenPosition = null
+                        } else if (position in viewModel.availableMoves) {
+                            val (fx, fy) = viewModel.chosenPosition!!.getWithoutOffset()
+                            val (tx, ty) = position.getWithoutOffset()
+                            val cell = gameManager.board.cells[fx][fy]!!
+
+                            if (cell.type == PieceType.Pawn &&
+                                ((cell.color == PieceColor.White && ty == gameManager.board.cells[tx].size - 1) ||
+                                        (cell.color == PieceColor.Black && ty == 0))
+                            ) {
+                                viewModel.promotionTarget = position
+                                viewModel.isPromotion = true
+                            } else {
+                                gameManager.sendMove(fx, fy, tx, ty)
+                                viewModel.availableMoves.clear()
+                            }
+
+                            if (!viewModel.isPromotion) {
+                                viewModel.chosenPosition = null
                             }
                         }
                     }
@@ -361,7 +355,6 @@ fun PieceView(
             }
         }
     }
-
 }
 
 @Composable
@@ -373,16 +366,13 @@ fun BoardColumn (
     columnCells: MutableList<Piece?>,
     gameManager: GameManager
 ) {
-
-    val columnSize = columnCells.size
-
-
     Column(
         modifier = Modifier
             .padding(start = start, top = top)
             .fillMaxHeight(),
         verticalArrangement = Arrangement.spacedBy((-7).dp)
     ) {
+        val columnSize = columnCells.size
         val colors = if (gameManager.color == "white") whiteSideColor else blackSideColor
         // column indexes are from A to K( for us it's x )
         // y for us means row

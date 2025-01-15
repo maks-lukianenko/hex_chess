@@ -76,7 +76,7 @@ fun MainMenuScreen(navController: NavController, gameManager: GameManager) {
         ) {
             Button(
                 onClick = {
-                    gameManager.connectToGame()
+                    gameManager.connectToGame(context)
                     navController.navigateToOnlineGame()
                 },
                 modifier = Modifier

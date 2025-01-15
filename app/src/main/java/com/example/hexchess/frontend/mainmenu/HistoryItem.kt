@@ -49,6 +49,7 @@ fun HistoryItem(game: Game, boardState: SnapshotStateList<SnapshotStateList<Piec
     val playerWhite = game.playerWhite
     val playerBlack = game.playerBlack
     var currentMoveID = 0
+    val pieceStack = mutableListOf<Pair<Piece, Int>>()
 
     val configuration = LocalConfiguration.current
     val SIZE = (configuration.screenWidthDp.dp / 10)
@@ -98,7 +99,21 @@ fun HistoryItem(game: Game, boardState: SnapshotStateList<SnapshotStateList<Piec
             }
         }
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
-            IconButton(onClick = {}) {
+            IconButton(onClick = {
+                if (currentMoveID - 1 in game.moves.indices) {
+                    currentMoveID -= 1
+                    val move = game.moves[currentMoveID]
+                    val (fx, fy) = chessNotationToCoords(move.from_position)
+                    val (tx, ty) = chessNotationToCoords(move.to_position)
+                    cells[fx][fy] = if (move.promotion_piece == "") cells[tx][ty] else Piece(cells[tx][ty]!!.color, PieceType.Pawn, false)
+                    cells[tx][ty] = null
+                    if (pieceStack.isNotEmpty() && pieceStack.last().second == currentMoveID) {
+                        cells[tx][ty] = pieceStack.last().first
+                        pieceStack.removeAt(pieceStack.size - 1)
+                    }
+
+                }
+            }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowLeft,
                     contentDescription = "Previous"
@@ -107,9 +122,20 @@ fun HistoryItem(game: Game, boardState: SnapshotStateList<SnapshotStateList<Piec
             IconButton(onClick = {
                 if (currentMoveID in game.moves.indices) {
                     val move = game.moves[currentMoveID]
-                    val (fx, fy) = chessNotationToCoords(move.from)
-                    val (tx, ty) = chessNotationToCoords(move.to)
-                    cells[tx][ty] = cells[fx][fy]
+                    val (fx, fy) = chessNotationToCoords(move.from_position)
+                    val (tx, ty) = chessNotationToCoords(move.to_position)
+                    if (cells[tx][ty] != null) {
+                        pieceStack.add(Pair(cells[tx][ty]!!, currentMoveID))
+                    }
+                    val pieceType = when (move.promotion_piece) {
+                        "rook" -> PieceType.Rook
+                        "bishop" -> PieceType.Bishop
+                        "queen" -> PieceType.Queen
+                        "knight" -> PieceType.Knight
+                        else -> cells[fx][fy]!!.type
+                    }
+                    cells[tx][ty] = Piece(cells[fx][fy]!!.color, pieceType, false)
+
                     cells[fx][fy] = null
                     currentMoveID += 1
                 }
@@ -190,8 +216,6 @@ fun HistoryBoardColumn (
             .fillMaxHeight(),
         verticalArrangement = Arrangement.spacedBy((-7).dp)
     ) {
-        // column indexes are from A to K( for us it's x )
-        // y for us means row
         columnCells.forEachIndexed { i, _ ->
             HistoryPieceView(sizeOfItem, colors[(i + startColor) % 3], columnCells[columnSize - 1 - i])
         }
@@ -205,3 +229,4 @@ private fun chessNotationToCoords(pos: String): Pair<Int, Int> {
     val y = row - 1
     return Pair(x, y)
 }
+

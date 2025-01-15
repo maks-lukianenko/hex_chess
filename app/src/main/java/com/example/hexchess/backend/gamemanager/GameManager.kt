@@ -1,9 +1,11 @@
 package com.example.hexchess.backend.gamemanager
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.example.hexchess.R
 import com.example.hexchess.backend.onlinegame.Board
 import com.example.hexchess.backend.onlinegame.Piece
 import com.example.hexchess.backend.onlinegame.PieceColor
@@ -37,8 +39,8 @@ class GameManager {
     var currentRating = ""
     var opponentRating = ""
 
-    fun connectToGame() {
-        val request = Request.Builder().url("ws://34.159.110.3:8000/ws/games/match/")
+    fun connectToGame(context: Context) {
+        val request = Request.Builder().url("ws://${context.getString(R.string.server_ip)}/ws/games/match/")
             .addHeader("Authorization", "Bearer $token")
             .build()
         resetGame()
@@ -76,6 +78,7 @@ class GameManager {
         val moveJson = JSONObject().apply {
             put("type", "checkmate")
         }
+        Log.d(TAG, "Checkmate sent")
         webSocket?.send(moveJson.toString())
     }
 
@@ -121,7 +124,6 @@ class GameManager {
                 }
                 "turn_update" -> {
                     isPlayerTurn = data.getString("current_turn") == color
-                    if (isPlayerTurn && board.checkForCheckMate()) sendCheckMate()
                     Log.d(TAG, "TURN: ${data.getString("current_turn")}")
                 }
                 "opponent_disconnected" -> {
@@ -131,10 +133,12 @@ class GameManager {
                 "win" -> {
                     isEndedGame = true
                     isWin = true
+                    Log.d(TAG, "You won")
                 }
                 "lose" -> {
                     isEndedGame = true
                     isWin = false
+                    Log.d(TAG, "You loose")
                 }
             }
             Log.d(TAG, "ON MESSAGE")
@@ -205,6 +209,7 @@ class GameManager {
             board.cells[tx][ty] = Piece(pieceColor, pieceType, false)
             board.cells[fx][fy] = null
         }
+        if (playerColor != pieceColor && board.checkForCheckMate()) sendCheckMate()
     }
 
     private fun chessNotationToCoords(pos: String): Pair<Int, Int> {
@@ -218,8 +223,6 @@ class GameManager {
     private fun coordsToChessNotation(x: Int, y: Int): String {
         val column = ('a' + x).toString()
         val row = (y + 1).toString()
-
-        Log.d(TAG, "Coords: $column$row")
 
         return column + row
     }

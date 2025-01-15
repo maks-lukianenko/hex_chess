@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">hexchess</string>
+    <string name="server_ip">34.159.110.3:8000</string>
 </resources>

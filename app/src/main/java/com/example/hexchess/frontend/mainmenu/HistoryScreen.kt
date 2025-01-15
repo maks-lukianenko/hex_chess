@@ -51,7 +51,7 @@ fun HistoryScreen(navController: NavController, viewModel: HistoryViewModel = vi
 
     LaunchedEffect(key1 = token) {
         token?.let {
-            viewModel.fetchGames(it)
+            viewModel.fetchGames(it, context)
         }
     }
 

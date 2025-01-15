@@ -1,9 +1,11 @@
 package com.example.hexchess.frontend.mainmenu
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hexchess.R
 import com.example.hexchess.backend.gamemanager.Game
 import com.example.hexchess.backend.onlinegame.Piece
 import com.example.hexchess.backend.onlinegame.PieceColor
@@ -78,9 +80,9 @@ class HistoryViewModel : ViewModel() {
         _cells[5][10] = Piece(PieceColor.Black, PieceType.Bishop, true)
     }
 
-    fun fetchGames(token: String) {
+    fun fetchGames(token: String, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
-            val url = "http://34.159.110.3:8000/game-manager/games/"
+            val url = "http://${context.getString(R.string.server_ip)}/game-manager/games/"
 
             val request = Request.Builder()
                 .url(url)

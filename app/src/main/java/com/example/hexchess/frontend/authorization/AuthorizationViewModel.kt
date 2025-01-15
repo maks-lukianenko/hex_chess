@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.example.hexchess.R
 import com.example.hexchess.backend.authorization.LoginRequest
 import com.example.hexchess.backend.authorization.RegisterRequest
 import com.example.hexchess.backend.authorization.TokenManager
@@ -35,7 +36,7 @@ class AuthorizationViewModel : ViewModel() {
         val userNameManager = UserNameManager(context)
 
         val request = Request.Builder()
-            .url("http://34.159.110.3:8000/players/login/")
+            .url("http://${context.getString(R.string.server_ip)}/players/login/")
             .post(requestBody)
             .build()
 
@@ -78,7 +79,7 @@ class AuthorizationViewModel : ViewModel() {
         val userNameManager = UserNameManager(context)
 
         val request = Request.Builder()
-            .url("http://34.159.110.3:8000/players/register/")
+            .url("http://${context.getString(R.string.server_ip)}/players/register/")
             .post(requestBody)
             .build()
 
